@@ -1,7 +1,6 @@
-const { addWeeks, isAfter, subYears } = require("date-fns");
+const { addWeeks, isAfter, } = require("date-fns");
 
-const createAverageSerie = (series) => {
-  const startDate = subYears(new Date(), 1);
+const createAverageSerie = (series, startDate) => {
 
   const average = [];
   let date = startDate;
