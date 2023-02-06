@@ -28,12 +28,26 @@ async function fetchMembersLatestRaces(instance, member) {
 }
 
 const graphImprovementLastWeek = async (instance, rosterData) => {
+
+  const seriesResponse = await instance.get("/data/series/get");
+  const seriesData = (await instance.get(seriesResponse.data.link)).data;
+  const categories = seriesData.map(s => ({
+    category: s.category,
+    id: s.series_id
+  }));
+
+
+
   const data = (
     await Promise.all(
       rosterData.map(async (member) => {
         const stats = await fetchMembersLatestRaces(instance, member);
         const races = stats.data.races
           .filter((r) => isAfter(new Date(r.session_start_time), subWeeks(new Date(), 1)))
+          .filter((r) => {
+            const category = categories.find(c => c.id === r.series_id)?.category;
+            return category === "road";
+          })
           .sort((a, b) => differenceInMinutes(new Date(a.session_start_time), new Date(b.session_start_time)))
           .map((r) => ({
             n: r.newi_rating,
