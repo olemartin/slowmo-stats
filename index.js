@@ -245,8 +245,12 @@ const run = async () => {
   const graphUrls = await Promise.all(promises);
   console.log(JSON.stringify(graphUrls.map((u) => ({ image: { url: u } }))));
 
-  await instance.post(process.env.DISCORD_WEBHOOK, {
-      content: graphUrls.map((u) => ({ image: { url: u } }))
+  await instance.post(process.env.DISCORD_WEBHOOK,
+  {
+    "username": "Webhook",
+    "avatar_url": "https://cdn-icons-png.flaticon.com/512/4778/4778417.png",
+    "content": "Ukens statistikk.",
+    "embeds": graphUrls.map((u) => ({ image: { url: u } }))
   });
 
 };
