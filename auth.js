@@ -5,8 +5,6 @@ const { wrapper } = require("axios-cookiejar-support");
 const SHA256 = require("crypto-js/sha256");
 const Base64 = require("crypto-js/enc-base64");
 const { CookieJar } = require("tough-cookie");
-require("dotenv").config();
-
 
 const jar = new CookieJar();
 const email = process.env.IRACING_USERNAME;

@@ -1,3 +1,6 @@
+
+require("dotenv").config();
+
 const { subYears, isAfter, subWeeks, differenceInMinutes, format } = require("date-fns");
 const _ = require("underscore");
 
@@ -241,6 +244,13 @@ const run = async () => {
 
   const graphUrls = await Promise.all(promises);
   console.log(JSON.stringify(graphUrls.map((u) => ({ image: { url: u } }))));
+
+  await instance.post(process.env.DISCORD_WEBHOOK, {
+    body: {
+      content: graphUrls.map((u) => ({ image: { url: u } }))
+    }
+  });
+
 };
 
 Promise.all([run()]).catch((e) => {
