@@ -236,19 +236,17 @@ const run = async () => {
   const roster = await fetchTeamData(instance);
   const promises = await Promise.all([
     graphSrData(instance, roster),
-    graphIrData(instance, roster),
-    graphHistoricDataForTeam(instance, roster),
-    graphMostPopularSeriesLastWeek(instance, roster),
-    graphImprovementLastWeek(instance, roster)
+    // graphIrData(instance, roster),
+    // graphHistoricDataForTeam(instance, roster),
+    // graphMostPopularSeriesLastWeek(instance, roster),
+    // graphImprovementLastWeek(instance, roster)
   ]);
 
   const graphUrls = await Promise.all(promises);
   console.log(JSON.stringify(graphUrls.map((u) => ({ image: { url: u } }))));
 
   await instance.post(process.env.DISCORD_WEBHOOK, {
-    body: {
       content: graphUrls.map((u) => ({ image: { url: u } }))
-    }
   });
 
 };
