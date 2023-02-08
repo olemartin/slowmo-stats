@@ -236,10 +236,10 @@ const run = async () => {
   const roster = await fetchTeamData(instance);
   const promises = await Promise.all([
     graphSrData(instance, roster),
-    // graphIrData(instance, roster),
-    // graphHistoricDataForTeam(instance, roster),
-    // graphMostPopularSeriesLastWeek(instance, roster),
-    // graphImprovementLastWeek(instance, roster)
+    graphIrData(instance, roster),
+    graphHistoricDataForTeam(instance, roster),
+    graphMostPopularSeriesLastWeek(instance, roster),
+    graphImprovementLastWeek(instance, roster)
   ]);
 
   const graphUrls = await Promise.all(promises);
@@ -247,9 +247,9 @@ const run = async () => {
 
   await instance.post(process.env.DISCORD_WEBHOOK,
   {
-    "username": "Webhook",
+    "username": "SloWmo stats",
     "avatar_url": "https://cdn-icons-png.flaticon.com/512/4778/4778417.png",
-    "content": "Ukens statistikk.",
+    "content": "Ukens statistikk",
     "embeds": graphUrls.map((u) => ({ image: { url: u } }))
   });
 
