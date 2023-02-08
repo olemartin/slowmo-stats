@@ -231,6 +231,10 @@ const graphSrData = async (instance, rosterData) => {
 };
 
 const run = async () => {
+  if (new Date().getDay() !== 1) {
+    console.log("Not monday");
+    return;
+  }
   const instance = await auth();
 
   const roster = await fetchTeamData(instance);
