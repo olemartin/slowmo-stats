@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const { subYears, isAfter, subWeeks, differenceInMinutes, format } = require("date-fns");
@@ -38,7 +37,6 @@ const graphImprovementLastWeek = async (instance, rosterData, category) => {
     category: s.category,
     id: s.series_id
   }));
-
 
 
   const data = (
@@ -238,34 +236,33 @@ const run = async () => {
   const instance = await auth();
 
   const roster = await fetchTeamData(instance);
-  const promises = await Promise.all([
-    graphMostPopularSeriesLastWeek(instance, roster),
-    graphSrData(instance, roster, 'road'),
-    graphIrData(instance, roster, 'road'),
-    graphHistoricDataForTeam(instance, roster, 2, 'road'),
-    graphImprovementLastWeek(instance, roster, 'road'),
-    graphSrData(instance, roster, 'oval'),
-    graphIrData(instance, roster, 'oval'),
-    graphHistoricDataForTeam(instance, roster, 1, 'oval'),
-    graphImprovementLastWeek(instance, roster, 'oval')
-  ]);
+  const graphUrls = [
+    await graphMostPopularSeriesLastWeek(instance, roster),
+    await graphSrData(instance, roster, "road"),
+    await graphIrData(instance, roster, "road"),
+    await graphHistoricDataForTeam(instance, roster, 2, "road"),
+    await graphImprovementLastWeek(instance, roster, "road"),
+    await graphSrData(instance, roster, "oval"),
+    await graphIrData(instance, roster, "oval"),
+    await graphHistoricDataForTeam(instance, roster, 1, "oval"),
+    await graphImprovementLastWeek(instance, roster, "oval")
+  ];
 
-  const graphUrls = await Promise.all(promises);
   console.log(JSON.stringify(graphUrls.map((u) => ({ image: { url: u } }))));
 
   await instance.post(process.env.DISCORD_WEBHOOK,
-  {
-    "username": "SloWmo stats",
-    "avatar_url": "https://cdn-icons-png.flaticon.com/512/4778/4778417.png",
-    "content": "Ukens statistikk",
-    "embeds": graphUrls.map((u) => ({ image: { url: u } }))
-  });
+    {
+      "username": "SloWmo stats",
+      "avatar_url": "https://cdn-icons-png.flaticon.com/512/4778/4778417.png",
+      "content": "Ukens statistikk",
+      "embeds": graphUrls.map((u) => ({ image: { url: u } }))
+    });
 
 };
 
 Promise.all([run()]).catch((e) => {
   console.log(e);
 }).then(res => {
-  console.log("Exiting")
+  console.log("Exiting");
   process.exit(0);
 });
