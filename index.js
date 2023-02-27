@@ -30,7 +30,7 @@ async function fetchMembersLatestRaces(instance, member) {
   return instance.get(memberResponse.data.link);
 }
 
-const graphImprovementLastWeek = async (instance, rosterData) => {
+const graphImprovementLastWeek = async (instance, rosterData, category) => {
 
   const seriesResponse = await instance.get("/data/series/get");
   const seriesData = (await instance.get(seriesResponse.data.link)).data;
@@ -48,8 +48,8 @@ const graphImprovementLastWeek = async (instance, rosterData) => {
         const races = stats.data.races
           .filter((r) => isAfter(new Date(r.session_start_time), subWeeks(new Date(), 1)))
           .filter((r) => {
-            const category = categories.find(c => c.id === r.series_id)?.category;
-            return category === "road";
+            const cat = categories.find(c => c.id === r.series_id)?.category;
+            return cat === category;
           })
           .sort((a, b) => differenceInMinutes(new Date(a.session_start_time), new Date(b.session_start_time)))
           .map((r) => ({
@@ -78,7 +78,7 @@ const graphImprovementLastWeek = async (instance, rosterData) => {
     "bar",
     data.map((r) => r.name),
     data.map((r) => r.ratingChange),
-    "SloWmo ir-change last week"
+    "SloWmo " + category + " ir-change last week"
   );
 };
 
@@ -108,14 +108,14 @@ const graphMostPopularSeriesLastWeek = async (instance, rosterData) => {
   );
 };
 
-const graphHistoricDataForTeam = async (instance, rosterData) => {
+const graphHistoricDataForTeam = async (instance, rosterData, categoryId, category) => {
   const series = [];
   await Promise.all(
     rosterData.map(async (member) => {
       const memberResponse = await instance.get("/data/member/chart_data", {
         params: {
           cust_id: member.cust_id,
-          category_id: 2,
+          category_id: categoryId,
           chart_type: 1
         }
       });
@@ -137,7 +137,7 @@ const graphHistoricDataForTeam = async (instance, rosterData) => {
       y: Math.round(d.value),
       x: format(new Date(d.timestamp), "yyyy-MM-dd")
     })),
-    "SloWmos average ir"
+    "SloWmo " + category + " average ir"
   );
 };
 
@@ -181,10 +181,10 @@ const graphYearlyData = async (instance, rosterData) => {
   console.log(minLaps.display_name + " kjørte " + minLaps.laps + " runder");
 };
 
-const graphIrData = async (instance, rosterData) => {
+const graphIrData = async (instance, rosterData, category) => {
   const labels = rosterData.map((member) => member.display_name);
   const data = rosterData.map((m) => {
-    const license = m.licenses.find((l) => l.category === "road");
+    const license = m.licenses.find((l) => l.category === category);
 
     return {
       y: license.irating,
@@ -196,14 +196,14 @@ const graphIrData = async (instance, rosterData) => {
     "bar",
     labels,
     data.map((d) => d.y),
-    "SloWmos iRating"
+    "SloWmo " + category + " iRating"
   );
 };
 
-const graphSrData = async (instance, rosterData) => {
+const graphSrData = async (instance, rosterData, category) => {
   const labels = rosterData.map((member) => member.display_name);
   const data = rosterData.map((m) => {
-    const license = m.licenses.find((l) => l.category === "road");
+    const license = m.licenses.find((l) => l.category === category);
     return {
       license: license.group_id,
       rating: license.safety_rating
@@ -227,7 +227,7 @@ const graphSrData = async (instance, rosterData) => {
       datasets[i].data.push(0);
     }
   }
-  return chartData("stacked", labels, datasets, "SloWmos Safety");
+  return chartData("stacked", labels, datasets, "SloWmos " + category + " safety");
 };
 
 const run = async () => {
@@ -239,11 +239,15 @@ const run = async () => {
 
   const roster = await fetchTeamData(instance);
   const promises = await Promise.all([
-    graphSrData(instance, roster),
-    graphIrData(instance, roster),
-    graphHistoricDataForTeam(instance, roster),
     graphMostPopularSeriesLastWeek(instance, roster),
-    graphImprovementLastWeek(instance, roster)
+    graphSrData(instance, roster, 'road'),
+    graphIrData(instance, roster, 'road'),
+    graphHistoricDataForTeam(instance, roster, 2, 'road'),
+    graphImprovementLastWeek(instance, roster, 'road'),
+    graphSrData(instance, roster, 'oval'),
+    graphIrData(instance, roster, 'oval'),
+    graphHistoricDataForTeam(instance, roster, 1, 'oval'),
+    graphImprovementLastWeek(instance, roster, 'oval')
   ]);
 
   const graphUrls = await Promise.all(promises);
