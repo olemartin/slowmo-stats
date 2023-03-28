@@ -87,7 +87,8 @@ export async function getSubsession(instance, subSessionId, custId) {
 
   const session = await instance.get("/data/results/get", {
     params: {
-      subsession_id: subSessionId, include_licenses: true
+      subsession_id: subSessionId,
+      include_licenses: true
     }
   });
   const data = await instance.get(session.data.link);

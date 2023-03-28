@@ -111,7 +111,9 @@ const postToDiscord = async (instance, race, raceDetails, member) => {
             "value": `${raceDetails.race.newi_rating} (${formatter.format(raceDetails.race.newi_rating - raceDetails.race.oldi_rating)})`,
             "inline": true
           }
-        ]
+        ], "footer": {
+          "text": `Startet: ${format(new Date(race.start_time), "dd.MM.yyyy, HH:mm")}`
+        }
       }
     ];
 
@@ -145,11 +147,12 @@ redis.connect().then(async () => {
   //   [
   //     { "cust_id": 505047, display_name: "Ole-Martin Mørk" },
   //     { "cust_id": 779960, display_name: "Ingar Almklov" },
-  // ];
+  //   ];
   for (const member of roster) {
     console.log(member.cust_id);
     const latestRace = await getLatestRace(member.cust_id);
-    const races = (await fetchMembersLatest(instance, member, 5, latestRace?.endTime)).data;//.filter(r => r.subsession_id !== latestRace.subsessionId);
+    const races = (await fetchMembersLatest(instance, member, 5, latestRace?.endTime)).data;
+
     //const hosted = fetchMembersHosted(instance, member, endTime);
     for (const race of races) {
       const raceDetails = await getSubsession(instance, race.subsession_id, member.cust_id);
