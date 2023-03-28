@@ -93,8 +93,6 @@ const chartData = async (type, labels, data, title) => {
     };
   }
 
-  //console.log(stringify(chart));
-
   const shorten = await axios.post(`${BASE_URL}/create`, {
     chart: stringify(chart),
     width: 1000,

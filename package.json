@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,8 +16,10 @@
     "chart.js": "^3.9.1",
     "crypto-js": "^4.1.1",
     "date-fns": "^2.29.3",
+    "discord.js": "^14.8.0",
     "dotenv": "^16.0.3",
     "javascript-stringify": "^2.1.0",
+    "redis": "^4.6.5",
     "tough-cookie": "^4.1.2",
     "underscore": "^1.13.6"
   },

@@ -1,50 +1,22 @@
+import { getMemberChartData, fetchMembersHosted, fetchMembersLatest, fetchTeamData, getRaceCategories } from "./integration.js";
+import { differenceInMinutes, format, isAfter, subYears } from "date-fns";
+import _ from "underscore";
+
+import { createAverageSerie } from "./averaging";
+import { chartData } from "./chart";
+import { auth } from "./auth";
+
 require("dotenv").config();
-
-const { subYears, isAfter, subWeeks, differenceInMinutes, format } = require("date-fns");
-const _ = require("underscore");
-
-const { createAverageSerie } = require("./averaging");
-const { chartData } = require("./chart");
-const { auth } = require("./auth");
 
 const startDate = subYears(new Date(), 1);
 
-const fetchTeamData = async (instance) => {
-  const teamResponse = await instance.get("/data/team/get", {
-    params: {
-      team_id: 142955,
-      include_licenses: true
-    },
-    withCredentials: true
-  });
-  return (await instance.get(teamResponse.data.link)).data.roster;
-};
-
-async function fetchMembersLatestRaces(instance, member) {
-  const memberResponse = await instance.get("/data/stats/member_recent_races", {
-    params: {
-      cust_id: member.cust_id
-    }
-  });
-  return instance.get(memberResponse.data.link);
-}
-
 const graphImprovementLastWeek = async (instance, rosterData, category) => {
-
-  const seriesResponse = await instance.get("/data/series/get");
-  const seriesData = (await instance.get(seriesResponse.data.link)).data;
-  const categories = seriesData.map(s => ({
-    category: s.category,
-    id: s.series_id
-  }));
-
-
+  const categories = await getRaceCategories(instance);
   const data = (
     await Promise.all(
       rosterData.map(async (member) => {
-        const stats = await fetchMembersLatestRaces(instance, member);
+        const stats = await fetchMembersLatest(instance, member, 5);
         const races = stats.data.races
-          .filter((r) => isAfter(new Date(r.session_start_time), subWeeks(new Date(), 1)))
           .filter((r) => {
             const cat = categories.find(c => c.id === r.series_id)?.category;
             return cat === category;
@@ -72,6 +44,7 @@ const graphImprovementLastWeek = async (instance, rosterData, category) => {
       })
     )
   ).flat();
+
   return chartData(
     "bar",
     data.map((r) => r.name),
@@ -84,10 +57,8 @@ const graphMostPopularSeriesLastWeek = async (instance, rosterData) => {
   const allSeries = [];
   await Promise.all(
     rosterData.map(async (member) => {
-      const stats = await fetchMembersLatestRaces(instance, member);
-      const series = stats.data.races
-        .filter((r) => isAfter(new Date(r.session_start_time), subWeeks(new Date(), 1)))
-        .map((r) => r.series_name);
+      const stats = await fetchMembersLatest(instance, member, 5);
+      const series = stats.data.map((r) => r.series_name);
       allSeries.push(series);
     })
   );
@@ -105,19 +76,50 @@ const graphMostPopularSeriesLastWeek = async (instance, rosterData) => {
     "Series last week"
   );
 };
+const graphMostActiveMembersLastWeek = async (instance, rosterData) => {
+  const graphs = [];
+  const labels = [];
+  await Promise.all(
+    rosterData.map(async (member) => {
+      const stats = await fetchMembersLatest(instance, member);
+      const hosted = await fetchMembersHosted(instance, member);
+      if (stats?.data?.map) {
+        const events = stats.data.map((r) => r.event_type_name);
+        graphs.push({
+          name: member.display_name,
+          count: { ..._.countBy(events, (e) => e), Hosted: hosted?.data?.length || 0 }
+        });
+      }
+    })
+  );
+  const datasets = [
+    { label: "Race", data: [] },
+    { label: "Practice", data: [] },
+    { label: "Qualify", data: [] },
+    { label: "Hosted", data: [] },
+    { label: "Time Trial", data: [] }
+  ];
+
+
+  for (const member of graphs) {
+    if (Object.keys(member.count).some(k => member.count[k] > 0)) {
+      labels.push(member.name);
+      for (const type of Object.keys(member.count)) {
+        datasets.find(d => d.label === type).data.push(member.count[type]);
+      }
+      _.difference(datasets.map(d => d.label), Object.keys(member.count)).forEach(t => {
+        datasets.find(d => d.label === t).data.push(0);
+      });
+    }
+  }
+  return chartData("stacked", labels, datasets.filter(d => d.data.some(t => t > 0)), "Most active SloWmos");
+};
 
 const graphHistoricDataForTeam = async (instance, rosterData, categoryId, category) => {
   const series = [];
   await Promise.all(
     rosterData.map(async (member) => {
-      const memberResponse = await instance.get("/data/member/chart_data", {
-        params: {
-          cust_id: member.cust_id,
-          category_id: categoryId,
-          chart_type: 1
-        }
-      });
-      const memberStats = await instance.get(memberResponse.data.link);
+      const memberStats = await getMemberChartData(instance, member, categoryId);
       const stats = memberStats.data.data
         .filter((d) => isAfter(new Date(d.when), startDate))
         .map((d) => ({ timestamp: new Date(d.when), value: d.value }));
@@ -138,48 +140,7 @@ const graphHistoricDataForTeam = async (instance, rosterData, categoryId, catego
     "SloWmo " + category + " average ir"
   );
 };
-
-const graphYearlyData = async (instance, rosterData) => {
-  const statistics = [];
-  await Promise.all(
-    rosterData.map(async (member) => {
-      const memberResponse = await instance.get("/data/stats/member_yearly", {
-        params: {
-          cust_id: member.cust_id
-        }
-      });
-      const memberStats = await instance.get(memberResponse.data.link);
-      const stats = memberStats.data.stats
-        .filter((d) => d.year === 2022)
-        .filter((d) => d.category === "Road");
-      statistics.push(
-        { ...stats[0], cust_id: member.cust_id, display_name: member.display_name }
-      );
-    })
-  );
-
-  console.log("Totalt antall seiere: " + statistics.map(s => s.wins).reduce((a, b) => a + b, 0));
-  console.log("Totalt antall starter: " + statistics.map(s => s.starts).reduce((a, b) => a + b, 0));
-  console.log("Totalt antall top5: " + statistics.map(s => s.top5).reduce((a, b) => a + b, 0));
-  console.log("Totalt antall runder: " + statistics.map(s => s.laps).reduce((a, b) => a + b, 0));
-  console.log("Totalt antall poles: " + statistics.map(s => s.poles).reduce((a, b) => a + b, 0));
-  const maxStarts = _.max(statistics, (s) => s.starts);
-  const maxWins = _.max(statistics, (s) => s.win_percentage);
-  const maxTop5 = _.max(statistics, (s) => s.top5_percentage);
-  const maxLaps = _.max(statistics, (s) => s.laps);
-  const maxPoles = _.max(statistics, (s) => s.poles);
-  const maxLapsLed = _.max(statistics, (s) => s.laps_led);
-  const minLaps = _.min(statistics, (s) => s.laps);
-  console.log(maxStarts.display_name + " startet " + maxStarts.starts + " løp og fullførte " + maxStarts.laps);
-  console.log(maxWins.display_name + " vant " + maxWins.win_percentage + "% av sine " + maxWins.starts + " løp");
-  console.log(maxTop5.display_name + " kom topp 5 i " + maxTop5.top5_percentage + "% av sine " + maxTop5.starts + " løp");
-  console.log(maxLapsLed.display_name + " ledet " + maxLapsLed.laps_led + " av sine " + maxLapsLed.laps + " runder");
-  console.log(maxPoles.display_name + " hadde " + maxPoles.poles + " pole positions fordelt på " + maxLapsLed.starts + " starter");
-  console.log(maxLaps.display_name + " kjørte " + maxLaps.laps + " runder");
-  console.log(minLaps.display_name + " kjørte " + minLaps.laps + " runder");
-};
-
-const graphIrData = async (instance, rosterData, category) => {
+const graphIrData = async (rosterData, category) => {
   const labels = rosterData.map((member) => member.display_name);
   const data = rosterData.map((m) => {
     const license = m.licenses.find((l) => l.category === category);
@@ -198,7 +159,7 @@ const graphIrData = async (instance, rosterData, category) => {
   );
 };
 
-const graphSrData = async (instance, rosterData, category) => {
+const graphSrData = async (rosterData, category) => {
   const labels = rosterData.map((member) => member.display_name);
   const data = rosterData.map((m) => {
     const license = m.licenses.find((l) => l.category === category);
@@ -237,26 +198,28 @@ const run = async () => {
 
   const roster = await fetchTeamData(instance);
   const graphUrls = [
+    await graphMostActiveMembersLastWeek(instance, roster),
     await graphMostPopularSeriesLastWeek(instance, roster),
-    await graphSrData(instance, roster, "road"),
-    await graphIrData(instance, roster, "road"),
+    await graphSrData(roster, "road"),
+    await graphIrData(roster, "road"),
     await graphHistoricDataForTeam(instance, roster, 2, "road"),
     await graphImprovementLastWeek(instance, roster, "road"),
-    await graphSrData(instance, roster, "oval"),
-    await graphIrData(instance, roster, "oval"),
-    await graphHistoricDataForTeam(instance, roster, 1, "oval"),
-    await graphImprovementLastWeek(instance, roster, "oval")
+    //await graphSrData(instance, roster, "oval"),
+    //await graphIrData(instance, roster, "oval"),
+    //await graphHistoricDataForTeam(instance, roster, 1, "oval"),
+    //await graphImprovementLastWeek(instance, roster, "oval")
   ];
 
   console.log(JSON.stringify(graphUrls.map((u) => ({ image: { url: u } }))));
-
-  await instance.post(process.env.DISCORD_WEBHOOK,
-    {
-      "username": "SloWmo stats",
-      "avatar_url": "https://cdn-icons-png.flaticon.com/512/4778/4778417.png",
-      "content": "Ukens statistikk",
-      "embeds": graphUrls.map((u) => ({ image: { url: u } }))
-    });
+  if (process.env.DISCORD_WEBHOOK) {
+    await instance.post(process.env.DISCORD_WEBHOOK,
+      {
+        "username": "SloWmo stats",
+        "avatar_url": "https://cdn-icons-png.flaticon.com/512/4778/4778417.png",
+        "content": "Ukens statistikk",
+        "embeds": graphUrls.map((u) => ({ image: { url: u } }))
+      });
+  }
 
 };
 
