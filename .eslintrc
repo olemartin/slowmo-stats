@@ -1,0 +1,37 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:node/recommended",
+    "prettier"
+  ],
+  "env": {
+    "es6": true,
+    "node": true
+  },
+  "globals": {
+    "window": false
+  },
+  "rules": {
+    "consistent-return": 0,
+    "comma-dangle": 0,
+    "camelcase": 0,
+    "id-length": 0,
+    "radix": 1,
+    "node/no-unsupported-features/es-syntax": 0,
+    "node/no-unsupported-features/es-builtins": 0,
+    "no-process-exit": 0,
+    "no-empty": "warn",
+    "node/no-unpublished-import": [
+      "error",
+      {
+        "allowModules": [
+          "enzyme"
+        ]
+      }
+    ]
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  }
+}
