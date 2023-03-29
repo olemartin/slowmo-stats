@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { fetchMembersLatest, fetchTeamData, getSubsession } from './integration.js';
 import { auth } from './auth.js';
 import { createClient } from 'redis';
-import { format } from 'date-fns-tz';
+import { format, formatInTimeZone } from 'date-fns-tz';
 
 dotenv.config();
 
@@ -169,9 +169,7 @@ const postToDiscord = async (instance, race, raceDetails, member) => {
                 },
             ],
             footer: {
-                text: `Startet: ${format(new Date(race.start_time), 'dd.MM.yyyy, HH:mm', {
-                    timeZone: 'Europe/Berlin',
-                })}`,
+                text: `Startet: ${formatInTimeZone(new Date(race.start_time), 'Europe/Oslo', 'dd.MM.yyyy, HH:mm')}`,
             },
         },
     ];
