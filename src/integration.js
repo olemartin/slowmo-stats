@@ -82,9 +82,24 @@ export async function getSubsession(instance, subSessionId, custId) {
         const driverTeamRace = raceResults.find((r) => r.driver_results.find((r) => r.cust_id === custId));
         const race = driverTeamRace ? driverTeamRace.driver_results.find((r) => r.cust_id === custId) : undefined;
 
+        const poleposition = qualifyingResults
+            ? qualifyingResults.find((r) => r.finish_position_in_class === 1 && r.car_class_id === race.car_class_id)
+            : undefined;
+
+        const winner = raceResults.find(
+            (r) => r.finish_position_in_class === 1 && r.car_class_id === race.car_class_id
+        );
+
+        const fastestLap = raceResults
+            .filter((r) => r.best_lap_time !== -1 && r.car_class_id === race.car_class_id)
+            .sort((a, b) => a.best_lap_time - b.best_lap_time)[0];
+
         return {
             race,
             qualifying,
+            fastestLap,
+            winner,
+            poleposition,
         };
     }
 
@@ -94,6 +109,7 @@ export async function getSubsession(instance, subSessionId, custId) {
             include_licenses: true,
         },
     });
+
     const data = await instance.get(session.data.link);
     const raceDetails = data.data;
     if (raceDetails.driver_changes) {
@@ -102,11 +118,25 @@ export async function getSubsession(instance, subSessionId, custId) {
     const qualifying = raceDetails.session_results
         .find((r) => r.simsession_number === -1)
         .results.find((r) => r.cust_id === custId);
+
     const race = raceDetails.session_results
         .find((r) => r.simsession_number === 0)
         .results.find((r) => r.cust_id === custId);
 
-    return { race, qualifying };
+    const poleposition = raceDetails.session_results
+        .find((r) => r.simsession_number === -1)
+        .results.find((r) => r.finish_position_in_class === 1 && r.car_class_id === race.car_class_id);
+
+    const winner = raceDetails.session_results
+        .find((r) => r.simsession_number === 0)
+        .results.find((r) => r.finish_position_in_class === 1 && r.car_class_id === race.car_class_id);
+
+    const fastestLap = raceDetails.session_results
+        .find((r) => r.simsession_number === 0)
+        .results.filter((r) => r.best_lap_time !== -1 && r.car_class_id === race.car_class_id)
+        .sort((a, b) => a.best_lap_time - b.best_lap_time)[0];
+
+    return { race, qualifying, poleposition, winner, fastestLap };
 }
 
 export async function getLapData(instance, subSessionId, custId) {

@@ -51,7 +51,12 @@ const postToDiscord = async (instance, race, raceDetails, member) => {
     };
     let bestLap = new Date(raceDetails.race.best_lap_time / 10);
     let averageLap = new Date(raceDetails.race.average_lap / 10);
-    let qualLap = raceDetails.qualifying ? new Date(raceDetails.qualifying.best_qual_lap_time / 10) : new Date(0);
+    let qualLap = raceDetails.qualifying ? new Date(raceDetails.qualifying.best_qual_lap_time / 10) : undefined;
+
+    let poleposition = new Date(raceDetails.poleposition.best_qual_lap_time / 10);
+    let fastestLap = new Date(raceDetails.fastestLap.best_lap_time / 10);
+    let bestAverage = new Date(raceDetails.winner.average_lap / 10);
+
     const embeds = [
         {
             title: `${race.series_short_name} kjørt på ${race.track.track_name}`,
@@ -115,10 +120,43 @@ const postToDiscord = async (instance, race, raceDetails, member) => {
                 },
                 {
                     name: 'Kvalifisering',
-                    value: `${format(qualLap, 'mm:ss.SSS')}`,
+                    value: `${qualLap ? format(qualLap, 'mm:ss.SSS') : 'Ingen tid'}`,
                     inline: true,
                 },
-
+                { name: '', value: '' },
+                {
+                    name: 'Pole position',
+                    value: raceDetails.poleposition.display_name,
+                    inline: true,
+                },
+                {
+                    name: 'Tid',
+                    value: `${format(poleposition, 'mm:ss.SSS')}`,
+                    inline: true,
+                },
+                { name: '', value: '' },
+                {
+                    name: 'Vinner',
+                    value: raceDetails.winner.display_name,
+                    inline: true,
+                },
+                {
+                    name: 'Gjennomsnittlig tid',
+                    value: `${format(bestAverage, 'mm:ss.SSS')}`,
+                    inline: true,
+                },
+                { name: '', value: '' },
+                {
+                    name: 'Raskeste rundetid',
+                    value: raceDetails.fastestLap.display_name,
+                    inline: true,
+                },
+                {
+                    name: 'Tid',
+                    value: `${format(fastestLap, 'mm:ss.SSS')}`,
+                    inline: true,
+                },
+                { name: 'Resultat', value: '' },
                 {
                     name: 'Lisens',
                     value: `${formatLicense(raceDetails)}`,
