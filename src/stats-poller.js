@@ -197,14 +197,14 @@ const storeLatestRace = async (cust_id, latestRace) => {
 
 redis.connect().then(async () => {
     const instance = await auth();
-    // const roster = await fetchTeamData(instance);
-    const roster = [
-        { cust_id: 505047, display_name: 'Ole-Martin Mørk' },
-        { cust_id: 779960, display_name: 'Ingar Almklov' },
-    ];
+    const roster = await fetchTeamData(instance);
+    // const roster = [
+    //     { cust_id: 505047, display_name: 'Ole-Martin Mørk' },
+    //     { cust_id: 779960, display_name: 'Ingar Almklov' },
+    // ];
     for (const member of roster) {
         console.log(member.cust_id);
-        const latestRace = undefined; //await getLatestRace(member.cust_id);
+        const latestRace = await getLatestRace(member.cust_id);
         const races = (await fetchMembersLatest(instance, member, 5, latestRace?.endTime)).data;
 
         //const hosted = fetchMembersHosted(instance, member, endTime);
