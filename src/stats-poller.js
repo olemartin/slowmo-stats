@@ -1,16 +1,14 @@
 import dotenv from 'dotenv';
-
-dotenv.config();
-
-import { fetchMembersLatest, getSubsession } from './integration.js';
+import { fetchMembersLatest, fetchTeamData, getSubsession } from './integration.js';
 import { auth } from './auth.js';
 import { createClient } from 'redis';
 import { format } from 'date-fns-tz';
 
+dotenv.config();
+
 // eslint-disable-next-line no-unused-vars
 const getLatestRace = async (cust_id) => {
-    const latestRace = await redis.hGetAll(cust_id.toString());
-    return latestRace;
+    return await redis.hGetAll(cust_id.toString());
 };
 
 const postToDiscord = async (instance, race, raceDetails, member) => {
