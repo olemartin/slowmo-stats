@@ -83,11 +83,11 @@ export async function getSubsession(instance, subSessionId, custId) {
         const race = driverTeamRace ? driverTeamRace.driver_results.find((r) => r.cust_id === custId) : undefined;
 
         const poleposition = qualifyingResults
-            ? qualifyingResults.find((r) => r.finish_position_in_class === 1 && r.car_class_id === race.car_class_id)
+            ? qualifyingResults.find((r) => r.finish_position_in_class === 0 && r.car_class_id === race.car_class_id)
             : undefined;
 
         const winner = raceResults.find(
-            (r) => r.finish_position_in_class === 1 && r.car_class_id === race.car_class_id
+            (r) => r.finish_position_in_class === 0 && r.car_class_id === race.car_class_id
         );
 
         const fastestLap = raceResults
@@ -125,11 +125,11 @@ export async function getSubsession(instance, subSessionId, custId) {
 
     const poleposition = raceDetails.session_results
         .find((r) => r.simsession_number === -1)
-        .results.find((r) => r.finish_position_in_class === 1 && r.car_class_id === race.car_class_id);
+        .results.find((r) => r.finish_position_in_class === 0 && r.car_class_id === race.car_class_id);
 
     const winner = raceDetails.session_results
         .find((r) => r.simsession_number === 0)
-        .results.find((r) => r.finish_position_in_class === 1 && r.car_class_id === race.car_class_id);
+        .results.find((r) => r.finish_position_in_class === 0 && r.car_class_id === race.car_class_id);
 
     const fastestLap = raceDetails.session_results
         .find((r) => r.simsession_number === 0)

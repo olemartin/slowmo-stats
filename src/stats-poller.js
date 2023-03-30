@@ -197,6 +197,7 @@ redis.connect().then(async () => {
     // const roster = [
     //     { cust_id: 505047, display_name: 'Ole-Martin Mørk' },
     //     { cust_id: 779960, display_name: 'Ingar Almklov' },
+    //     { cust_id: 204944, display_name: 'David Harney' },
     // ];
     for (const member of roster) {
         console.log(member.cust_id);
