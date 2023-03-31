@@ -82,12 +82,12 @@ const postToDiscord = async (instance, race, raceDetails, member) => {
                 },
                 {
                     name: 'Start',
-                    value: race.starting_position_in_class,
+                    value: race.starting_position_in_class + 1,
                     inline: true,
                 },
                 {
                     name: 'Plassering',
-                    value: race.finish_position_in_class,
+                    value: race.finish_position_in_class + 1,
                     inline: true,
                 },
 
