@@ -4,6 +4,7 @@ import {
     fetchMembersLatest,
     fetchTeamData,
     getRaceCategories,
+    getSubsession,
 } from './integration.js';
 import { differenceInMinutes, format, isAfter, subYears } from 'date-fns';
 import _ from 'underscore';
@@ -23,20 +24,27 @@ const graphImprovementLastWeek = async (instance, rosterData, category) => {
         await Promise.all(
             rosterData.map(async (member) => {
                 const stats = await fetchMembersLatest(instance, member, 5);
-                const races = stats.data.races
-                    .filter((r) => {
-                        const cat = categories.find((c) => c.id === r.series_id)?.category;
-                        return cat === category;
-                    })
-                    .sort((a, b) => differenceInMinutes(new Date(a.session_start_time), new Date(b.session_start_time)))
-                    .map((r) => ({
-                        n: r.newi_rating,
-                        o: r.oldi_rating,
-                        ns: r.new_sub_level,
-                        os: r.old_sub_level,
-                        ll: r.license_level,
-                    }));
-
+                const races = await Promise.all(
+                    stats.data
+                        .filter((r) => {
+                            const cat = categories.find((c) => c.id === r.series_id)?.category;
+                            return cat === category;
+                        })
+                        .sort((a, b) =>
+                            differenceInMinutes(new Date(a.session_start_time), new Date(b.session_start_time))
+                        )
+                        .map(async (race) => await getSubsession(instance, race.subsession_id, member.cust_id))
+                        .map(async (race) => {
+                            const r = await race;
+                            return {
+                                n: r.race.newi_rating,
+                                o: r.race.oldi_rating,
+                                ns: r.race.new_sub_level,
+                                os: r.race.old_sub_level,
+                                ll: r.race.license_level,
+                            };
+                        })
+                );
                 if (races.length > 0) {
                     const startIrating = races[0].o;
                     const endIrating = races[races.length - 1].n;

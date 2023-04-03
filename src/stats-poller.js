@@ -6,7 +6,6 @@ import { format, formatInTimeZone } from 'date-fns-tz';
 
 dotenv.config();
 
-// eslint-disable-next-line no-unused-vars
 const getLatestRace = async (cust_id) => {
     return await redis.hGetAll(cust_id.toString());
 };
