@@ -1,4 +1,4 @@
-import { startOfDay, subWeeks } from 'date-fns';
+import { startOfDay, subWeeks, addMinutes, subMinutes, parseISO } from 'date-fns';
 
 export async function fetchMembersLatest(instance, member, type, finishRange) {
     const startTime = subWeeks(startOfDay(new Date()), 1);
@@ -17,6 +17,29 @@ export async function fetchMembersLatest(instance, member, type, finishRange) {
         );
     } else {
         return { data: [] };
+    }
+}
+
+export async function getSplitInformation(instance, sessionId, subsessionId, startTime, seriesId, type) {
+    const response = await instance.get('/data/results/search_series', {
+        params: {
+            start_range_begin: subMinutes(parseISO(startTime), 2),
+            start_range_end: addMinutes(parseISO(startTime), 2),
+            series_id: seriesId,
+            official_only: true,
+            event_types: type,
+        },
+    });
+    if (response.data.data.chunk_info.rows > 0) {
+        const splits = await instance.get(
+            response.data.data.chunk_info.base_download_url + response.data.data.chunk_info.chunk_file_names[0]
+        );
+
+        const splitsFiltered = splits.data
+            .filter((s) => s.session_id === sessionId)
+            .sort((a, b) => b.event_strength_of_field - a.event_strength_of_field);
+        const splitIndex = splitsFiltered.findIndex((s) => s.subsession_id === subsessionId);
+        return { splits: splitsFiltered.length, splitId: splitIndex + 1 };
     }
 }
 
@@ -100,6 +123,7 @@ export async function getSubsession(instance, subSessionId, custId) {
             fastestLap,
             winner,
             poleposition,
+            carNumber: 0,
         };
     }
 
@@ -136,7 +160,13 @@ export async function getSubsession(instance, subSessionId, custId) {
         .results.filter((r) => r.best_lap_time !== -1 && r.car_class_id === race.car_class_id)
         .sort((a, b) => a.best_lap_time - b.best_lap_time)[0];
 
-    return { race, qualifying, poleposition, winner, fastestLap };
+    const carNumber =
+        raceDetails.session_results
+            .find((r) => r.simsession_number === 0)
+            .results.sort((a, b) => b.oldi_rating - a.oldi_rating)
+            .findIndex((r) => r.cust_id === custId) + 1;
+
+    return { race, qualifying, poleposition, winner, fastestLap, carNumber };
 }
 
 export async function getLapData(instance, subSessionId, custId) {

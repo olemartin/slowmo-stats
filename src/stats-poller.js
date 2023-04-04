@@ -1,8 +1,9 @@
 import dotenv from 'dotenv';
-import { fetchMembersLatest, fetchTeamData, getSubsession } from './integration.js';
+import { fetchMembersLatest, getSplitInformation, fetchTeamData, getSubsession } from './integration.js';
 import { auth } from './auth.js';
 import { createClient } from 'redis';
 import { format, formatInTimeZone } from 'date-fns-tz';
+import nb from 'date-fns/locale/nb/index.js';
 
 dotenv.config();
 
@@ -10,42 +11,56 @@ const getLatestRace = async (cust_id) => {
     return await redis.hGetAll(cust_id.toString());
 };
 
-const postToDiscord = async (instance, race, raceDetails, member) => {
-    const safetyFormatter = new Intl.NumberFormat('en-US', {
+const postToDiscord = async (instance, race, raceDetails, splitInformation, member) => {
+    const safetyFormatter = new Intl.NumberFormat('nb-NB', {
         signDisplay: 'exceptZero',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
-    const formatter = new Intl.NumberFormat('en-US', {
+    const safetyMajorFormatter = new Intl.NumberFormat('nb-NB', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+    const diffFormatter = new Intl.NumberFormat('nb-NB', {
         signDisplay: 'exceptZero',
     });
-    const formatLicense = (raceDetails) => {
-        if (raceDetails.race.new_license_level <= 4) {
-            return `R ${raceDetails.race.new_sub_level / 100.0} (${safetyFormatter.format(
-                (raceDetails.race.new_sub_level - raceDetails.race.old_sub_level) / 100.0
-            )})`;
+
+    const ratingFormatter = new Intl.NumberFormat('nb-NB');
+
+    const mapLetter = (license) => {
+        if (license <= 4) {
+            return 'R';
         }
-        if (raceDetails.race.new_license_level <= 8) {
-            return `D ${raceDetails.race.new_sub_level / 100.0} (${safetyFormatter.format(
-                (raceDetails.race.new_sub_level - raceDetails.race.old_sub_level) / 100.0
-            )})`;
+        if (license <= 8) {
+            return 'D';
         }
-        if (raceDetails.race.new_license_level <= 12) {
-            return `C ${raceDetails.race.new_sub_level / 100.0} (${safetyFormatter.format(
-                (raceDetails.race.new_sub_level - raceDetails.race.old_sub_level) / 100.0
-            )})`;
+        if (license <= 12) {
+            return 'C';
         }
-        if (raceDetails.race.new_license_level <= 16) {
-            return `B ${raceDetails.race.new_sub_level / 100.0} (${safetyFormatter.format(
-                (raceDetails.race.new_sub_level - raceDetails.race.old_sub_level) / 100.0
-            )})`;
+        if (license <= 16) {
+            return 'B';
         }
-        if (raceDetails.race.new_license_level <= 20) {
-            return `A ${raceDetails.race.new_sub_level / 100.0} (${safetyFormatter.format(
-                (raceDetails.race.new_sub_level - raceDetails.race.old_sub_level) / 100.0
-            )})`;
+        if (license <= 20) {
+            return 'A';
         }
+        return 'P';
     };
+    const formatLicense = (race) => {
+        const newLic = mapLetter(race.new_license_level);
+        const oldLic = mapLetter(race.old_license_level);
+        const newSub = race.new_sub_level;
+        const oldSub = race.old_sub_level;
+
+        if (newLic === oldLic) {
+            return `${newLic} ${safetyMajorFormatter.format(newSub / 100.0)} (${safetyFormatter.format(
+                (newSub - oldSub) / 100.0
+            )})`;
+        }
+        return `${oldLic} ${safetyMajorFormatter.format(oldSub / 100.0)} ${
+            newLic > oldLic ? '↘' : '↗'
+        } ${newLic} ${safetyMajorFormatter.format(newSub / 100.0)}`;
+    };
+
     let bestLap = new Date(raceDetails.race.best_lap_time / 10);
     let averageLap = new Date(raceDetails.race.average_lap / 10);
     let qualLap = raceDetails.qualifying ? new Date(raceDetails.qualifying.best_qual_lap_time / 10) : undefined;
@@ -53,6 +68,15 @@ const postToDiscord = async (instance, race, raceDetails, member) => {
     let poleposition = new Date(raceDetails.poleposition.best_qual_lap_time / 10);
     let fastestLap = new Date(raceDetails.fastestLap.best_lap_time / 10);
     let bestAverage = new Date(raceDetails.winner.average_lap / 10);
+
+    const positionEmoji =
+        race.finish_position_in_class === 0
+            ? `🥇`
+            : race.finish_position_in_class === 1
+            ? `🥈`
+            : race.finish_position_in_class === 2
+            ? '🥉'
+            : undefined;
 
     const embeds = [
         {
@@ -70,34 +94,33 @@ const postToDiscord = async (instance, race, raceDetails, member) => {
                     inline: true,
                 },
                 {
-                    name: 'Klasse',
-                    value: race.car_class_short_name,
+                    name: `Split: ${splitInformation.splitId}/${splitInformation.splits}`,
+                    value: `SOF: ${ratingFormatter.format(race.event_strength_of_field)}`,
                     inline: true,
                 },
                 {
-                    name: 'SOF',
-                    value: race.event_strength_of_field,
+                    name: 'Startnummer',
+                    value: raceDetails.carNumber,
                     inline: true,
                 },
                 {
-                    name: 'Start',
-                    value: race.starting_position_in_class + 1,
+                    name: 'Startposisjon',
+                    value: `${race.starting_position_in_class + 1}.`,
                     inline: true,
                 },
                 {
                     name: 'Plassering',
-                    value: race.finish_position_in_class + 1,
+                    value: positionEmoji || `${race.finish_position_in_class + 1}.`,
                     inline: true,
                 },
-
                 {
                     name: 'Runder kjørt',
-                    value: race.laps_complete,
+                    value: ratingFormatter.format(race.laps_complete),
                     inline: true,
                 },
                 {
                     name: 'Runder ledet',
-                    value: race.laps_led,
+                    value: ratingFormatter.format(race.laps_led),
                     inline: true,
                 },
                 {
@@ -123,7 +146,9 @@ const postToDiscord = async (instance, race, raceDetails, member) => {
                 { name: '', value: '' },
                 {
                     name: 'Pole position',
-                    value: raceDetails.poleposition.display_name,
+                    value: `${raceDetails.poleposition.display_name} (${ratingFormatter.format(
+                        raceDetails.poleposition.newi_rating
+                    )})`,
                     inline: true,
                 },
                 {
@@ -134,7 +159,9 @@ const postToDiscord = async (instance, race, raceDetails, member) => {
                 { name: '', value: '' },
                 {
                     name: 'Vinner',
-                    value: raceDetails.winner.display_name,
+                    value: `${raceDetails.winner.display_name} (${ratingFormatter.format(
+                        raceDetails.winner.newi_rating
+                    )})`,
                     inline: true,
                 },
                 {
@@ -145,7 +172,9 @@ const postToDiscord = async (instance, race, raceDetails, member) => {
                 { name: '', value: '' },
                 {
                     name: 'Raskeste rundetid',
-                    value: raceDetails.fastestLap.display_name,
+                    value: `${raceDetails.fastestLap.display_name} (${ratingFormatter.format(
+                        raceDetails.fastestLap.newi_rating
+                    )})`,
                     inline: true,
                 },
                 {
@@ -156,19 +185,21 @@ const postToDiscord = async (instance, race, raceDetails, member) => {
                 { name: 'Resultat', value: '' },
                 {
                     name: 'Lisens',
-                    value: `${formatLicense(raceDetails)}`,
+                    value: `${formatLicense(raceDetails.race)}`,
                     inline: true,
                 },
                 {
                     name: 'iRating',
-                    value: `${raceDetails.race.newi_rating} (${formatter.format(
+                    value: `${ratingFormatter.format(raceDetails.race.newi_rating)} (${diffFormatter.format(
                         raceDetails.race.newi_rating - raceDetails.race.oldi_rating
                     )})`,
                     inline: true,
                 },
             ],
             footer: {
-                text: `Startet: ${formatInTimeZone(new Date(race.start_time), 'Europe/Oslo', 'dd.MM.yyyy, HH:mm')}`,
+                text: `Kjørt ${formatInTimeZone(new Date(race.start_time), 'Europe/Oslo', 'eeee dd.MM.yyyy, HH:mm', {
+                    locale: nb,
+                })}`,
             },
         },
     ];
@@ -194,19 +225,27 @@ redis.connect().then(async () => {
     const instance = await auth();
     const roster = await fetchTeamData(instance);
     // const roster = [
-    //     { cust_id: 505047, display_name: 'Ole-Martin Mørk' },
-    //     { cust_id: 779960, display_name: 'Ingar Almklov' },
-    //     { cust_id: 204944, display_name: 'David Harney' },
+    // { cust_id: 505047, display_name: 'Ole-Martin Mørk' },
+    // { cust_id: 779960, display_name: 'Ingar Almklov' },
+    // { cust_id: 172053, display_name: 'Magnus Bjerkaker' },
     // ];
     for (const member of roster) {
         console.log(member.cust_id);
-        const latestRace = await getLatestRace(member.cust_id);
+        const latestRace = await (process.env.SEND_ALL_RACES ? undefined : getLatestRace(member.cust_id));
         const races = (await fetchMembersLatest(instance, member, 5, latestRace?.endTime)).data;
 
         //const hosted = fetchMembersHosted(instance, member, endTime);
         for (const race of races) {
+            const splitInformation = await getSplitInformation(
+                instance,
+                race.session_id,
+                race.subsession_id,
+                race.start_time,
+                race.series_id,
+                5
+            );
             const raceDetails = await getSubsession(instance, race.subsession_id, member.cust_id);
-            await postToDiscord(instance, race, raceDetails, member);
+            await postToDiscord(instance, race, raceDetails, splitInformation, member);
         }
 
         if (races.length > 0) {
