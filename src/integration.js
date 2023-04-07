@@ -61,10 +61,10 @@ export async function fetchMembersHosted(instance, member) {
     }
 }
 
-export const fetchTeamData = async (instance) => {
+export const fetchTeamData = async (instance, teamId) => {
     const teamResponse = await instance.get('/data/team/get', {
         params: {
-            team_id: 142955,
+            team_id: teamId,
             include_licenses: true,
         },
         withCredentials: true,

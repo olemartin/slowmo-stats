@@ -12,13 +12,14 @@ import _ from 'underscore';
 import { createAverageSerie } from './averaging.js';
 import { chartData } from './chart.js';
 import { auth } from './auth.js';
+import teams from './teams.json' assert { type: 'json' };
 
 import dotenv from 'dotenv';
 dotenv.config();
 
 const startDate = subYears(new Date(), 1);
 
-const graphImprovementLastWeek = async (instance, rosterData, category) => {
+const graphImprovementLastWeek = async (instance, rosterData, category, team) => {
     const categories = await getRaceCategories(instance);
     const data = (
         await Promise.all(
@@ -64,7 +65,7 @@ const graphImprovementLastWeek = async (instance, rosterData, category) => {
         'bar',
         data.map((r) => r.name),
         data.map((r) => r.ratingChange),
-        'SloWmo ' + category + ' ir-change last week'
+        `${team.teamName} ${category} ir-change last week`
     );
 };
 
@@ -91,7 +92,7 @@ const graphMostPopularSeriesLastWeek = async (instance, rosterData) => {
         'Series last week'
     );
 };
-const graphMostActiveMembersLastWeek = async (instance, rosterData) => {
+const graphMostActiveMembersLastWeek = async (instance, rosterData, team) => {
     const graphs = [];
     const labels = [];
     await Promise.all(
@@ -136,11 +137,11 @@ const graphMostActiveMembersLastWeek = async (instance, rosterData) => {
         'stacked',
         labels,
         datasets.filter((d) => d.data.some((t) => t > 0)),
-        'Most active SloWmos'
+        `Most active ${team.memberName}s`
     );
 };
 
-const graphHistoricDataForTeam = async (instance, rosterData, categoryId, category) => {
+const graphHistoricDataForTeam = async (instance, rosterData, categoryId, category, team) => {
     const series = [];
     await Promise.all(
         rosterData.map(async (member) => {
@@ -162,10 +163,10 @@ const graphHistoricDataForTeam = async (instance, rosterData, categoryId, catego
             y: Math.round(d.value),
             x: format(new Date(d.timestamp), 'yyyy-MM-dd'),
         })),
-        'SloWmo ' + category + ' average ir'
+        `${team.teamName} ${category} average ir`
     );
 };
-const graphIrData = async (rosterData, category) => {
+const graphIrData = async (rosterData, category, team) => {
     const labels = rosterData.map((member) => member.display_name);
     const data = rosterData.map((m) => {
         const license = m.licenses.find((l) => l.category === category);
@@ -180,11 +181,11 @@ const graphIrData = async (rosterData, category) => {
         'bar',
         labels,
         data.map((d) => d.y),
-        'SloWmo ' + category + ' iRating'
+        `${team.teamName} ${category} iRating`
     );
 };
 
-const graphSrData = async (rosterData, category) => {
+const graphSrData = async (rosterData, category, team) => {
     const labels = rosterData.map((member) => member.display_name);
     const data = rosterData.map((m) => {
         const license = m.licenses.find((l) => l.category === category);
@@ -211,38 +212,39 @@ const graphSrData = async (rosterData, category) => {
             datasets[i].data.push(0);
         }
     }
-    return chartData('stacked', labels, datasets, 'SloWmos ' + category + ' safety');
+    return chartData('stacked', labels, datasets, `${team.memberName}s ${category} safety`);
 };
 
 const run = async () => {
-    if (new Date().getDay() !== 1) {
+    if (process.env.ALWAYS_RUN !== 'true' && new Date().getDay() !== 1) {
         console.log('Not monday');
         return;
     }
     const instance = await auth();
+    for (const team of teams) {
+        const roster = await fetchTeamData(instance, team.teamId);
+        const graphUrls = [
+            await graphMostActiveMembersLastWeek(instance, roster, team),
+            await graphMostPopularSeriesLastWeek(instance, roster, team),
+            await graphSrData(roster, 'road', team),
+            await graphIrData(roster, 'road', team),
+            await graphHistoricDataForTeam(instance, roster, 2, 'road', team),
+            await graphImprovementLastWeek(instance, roster, 'road', team),
+            //await graphSrData(instance, roster, "oval"),
+            //await graphIrData(instance, roster, "oval"),
+            //await graphHistoricDataForTeam(instance, roster, 1, "oval"),
+            //await graphImprovementLastWeek(instance, roster, "oval")
+        ];
 
-    const roster = await fetchTeamData(instance);
-    const graphUrls = [
-        await graphMostActiveMembersLastWeek(instance, roster),
-        await graphMostPopularSeriesLastWeek(instance, roster),
-        await graphSrData(roster, 'road'),
-        await graphIrData(roster, 'road'),
-        await graphHistoricDataForTeam(instance, roster, 2, 'road'),
-        await graphImprovementLastWeek(instance, roster, 'road'),
-        //await graphSrData(instance, roster, "oval"),
-        //await graphIrData(instance, roster, "oval"),
-        //await graphHistoricDataForTeam(instance, roster, 1, "oval"),
-        //await graphImprovementLastWeek(instance, roster, "oval")
-    ];
-
-    console.log(JSON.stringify(graphUrls.map((u) => ({ image: { url: u } }))));
-    if (process.env.DISCORD_WEBHOOK) {
-        await instance.post(process.env.DISCORD_WEBHOOK, {
-            username: 'SloWmo stats',
-            avatar_url: 'https://cdn-icons-png.flaticon.com/512/4778/4778417.png',
-            content: 'Ukens statistikk',
-            embeds: graphUrls.map((u) => ({ image: { url: u } })),
-        });
+        console.log(JSON.stringify(graphUrls.map((u) => ({ image: { url: u } }))));
+        if (process.env[team.discordUrl]) {
+            await instance.post(process.env[team.discordUrl], {
+                username: `${team.teamName} stats`,
+                avatar_url: 'https://cdn-icons-png.flaticon.com/512/4778/4778417.png',
+                content: 'Ukens statistikk',
+                embeds: graphUrls.map((u) => ({ image: { url: u } })),
+            });
+        }
     }
 };
 
