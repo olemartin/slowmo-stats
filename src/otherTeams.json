@@ -1,0 +1,16 @@
+[
+  {
+    "teamName": "SimRacing Norway",
+    "memberName": "SRN",
+    "teamId": 249973,
+    "discordUrl": "CHAPTER_WEBHOOK",
+    "minimal": true
+  },
+  {
+    "teamName": "Silverfox Racing",
+    "memberName": "Silver",
+    "teamId": 175060,
+    "discordUrl": "CHAPTER_WEBHOOK",
+    "minimal": true
+  }
+]

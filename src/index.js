@@ -26,7 +26,7 @@ const graphImprovementLastWeek = async (instance, rosterData, category, team) =>
             rosterData.map(async (member) => {
                 const stats = await fetchMembersLatest(instance, member, 5);
                 const races = await Promise.all(
-                    stats.data
+                    stats
                         .filter((r) => {
                             const cat = categories.find((c) => c.id === r.series_id)?.category;
                             return cat === category;
@@ -74,8 +74,10 @@ const graphMostPopularSeriesLastWeek = async (instance, rosterData) => {
     await Promise.all(
         rosterData.map(async (member) => {
             const stats = await fetchMembersLatest(instance, member, 5);
-            const series = stats.data.map((r) => r.series_name);
-            allSeries.push(series);
+            if (stats) {
+                const series = stats.map((r) => r.series_name);
+                allSeries.push(series);
+            }
         })
     );
     const grouped = _.groupBy(allSeries.flat(), (a) => a);
@@ -99,8 +101,8 @@ const graphMostActiveMembersLastWeek = async (instance, rosterData, team) => {
         rosterData.map(async (member) => {
             const stats = await fetchMembersLatest(instance, member);
             const hosted = await fetchMembersHosted(instance, member);
-            if (stats?.data?.map) {
-                const events = stats.data.map((r) => r.event_type_name);
+            if (stats?.map) {
+                const events = stats.map((r) => r.event_type_name);
                 graphs.push({
                     name: member.display_name,
                     count: { ..._.countBy(events, (e) => e), Hosted: hosted?.data?.length || 0 },

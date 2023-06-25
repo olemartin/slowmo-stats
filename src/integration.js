@@ -1,22 +1,31 @@
-import { startOfDay, subWeeks, addMinutes, subMinutes, parseISO } from 'date-fns';
+import { startOfDay, subWeeks, addMinutes, subMinutes, parseISO, subDays, isBefore } from 'date-fns';
 
-export async function fetchMembersLatest(instance, member, type, finishRange) {
+export async function fetchMembersLatest(instance, member, types, latestRace) {
     const startTime = subWeeks(startOfDay(new Date()), 1);
+    const minTime = subDays(startOfDay(new Date()), 89);
+
+    const finishRangeBegin = latestRace?.endTime
+        ? isBefore(parseISO(latestRace.endTime), minTime)
+            ? minTime
+            : latestRace.endTime
+        : startTime;
+
     const memberResponse = await instance.get('/data/results/search_series', {
         params: {
             cust_id: member.cust_id,
-            start_range_begin: finishRange || startTime,
+            finish_range_begin: finishRangeBegin,
             official_only: true,
-            event_types: type,
+            event_types: types.join(','),
         },
     });
     if (memberResponse.data.data.chunk_info.rows > 0) {
-        return instance.get(
+        const races = await instance.get(
             memberResponse.data.data.chunk_info.base_download_url +
                 memberResponse.data.data.chunk_info.chunk_file_names[0]
         );
+        return races.data.filter((data) => data.subsession_id !== parseInt(latestRace?.subsessionId, 10));
     } else {
-        return { data: [] };
+        return [];
     }
 }
 
@@ -95,13 +104,13 @@ export async function getMemberChartData(instance, member, categoryId) {
 
 export async function getSubsession(instance, subSessionId, custId) {
     async function getTeamDriver(raceDetails, custId) {
-        const qualifyingResults = raceDetails.session_results.find((r) => r.simsession_number === -1).results;
+        const qualifyingResults = raceDetails.session_results.find((r) => r.simsession_name === 'QUALIFY').results;
         const driverTeamQualifying = qualifyingResults.find((r) => r.driver_results.find((r) => r.cust_id === custId));
         const qualifying = driverTeamQualifying
             ? driverTeamQualifying.driver_results.find((r) => r.cust_id === custId)
             : undefined;
 
-        const raceResults = raceDetails.session_results.find((r) => r.simsession_number === 0).results;
+        const raceResults = raceDetails.session_results.find((r) => r.simsession_name === 'RACE').results;
         const driverTeamRace = raceResults.find((r) => r.driver_results.find((r) => r.cust_id === custId));
         const race = driverTeamRace ? driverTeamRace.driver_results.find((r) => r.cust_id === custId) : undefined;
 
@@ -117,6 +126,9 @@ export async function getSubsession(instance, subSessionId, custId) {
             .filter((r) => r.best_lap_time !== -1 && r.car_class_id === race.car_class_id)
             .sort((a, b) => a.best_lap_time - b.best_lap_time)[0];
 
+        const carNumber =
+            raceResults.sort((a, b) => b.oldi_rating - a.oldi_rating).findIndex((r) => r.cust_id === custId) + 1;
+
         return {
             race,
             qualifying,
@@ -124,6 +136,7 @@ export async function getSubsession(instance, subSessionId, custId) {
             winner,
             poleposition,
             carNumber: 0,
+            sof: 0,
         };
     }
 
@@ -140,33 +153,51 @@ export async function getSubsession(instance, subSessionId, custId) {
         return getTeamDriver(raceDetails, custId);
     }
     const qualifying = raceDetails.session_results
-        .find((r) => r.simsession_number === -1)
-        .results.find((r) => r.cust_id === custId);
+        .find((r) => r.simsession_name === 'QUALIFY')
+        ?.results.find((r) => r.cust_id === custId);
 
     const race = raceDetails.session_results
-        .find((r) => r.simsession_number === 0)
-        .results.find((r) => r.cust_id === custId);
+        .find((r) => r.simsession_name === 'RACE')
+        ?.results.find((r) => r.cust_id === custId);
 
     const poleposition = raceDetails.session_results
-        .find((r) => r.simsession_number === -1)
-        .results.find((r) => r.finish_position_in_class === 0 && r.car_class_id === race.car_class_id);
+        .find((r) => r.simsession_name === 'QUALIFY')
+        ?.results.find((r) => r.finish_position_in_class === 0 && r.car_class_id === qualifying.car_class_id);
 
     const winner = raceDetails.session_results
-        .find((r) => r.simsession_number === 0)
-        .results.find((r) => r.finish_position_in_class === 0 && r.car_class_id === race.car_class_id);
+        .find((r) => r.simsession_name === 'RACE')
+        ?.results.find((r) => r.finish_position_in_class === 0 && r.car_class_id === race.car_class_id);
 
     const fastestLap = raceDetails.session_results
-        .find((r) => r.simsession_number === 0)
-        .results.filter((r) => r.best_lap_time !== -1 && r.car_class_id === race.car_class_id)
+        .find((r) => r.simsession_name === 'RACE')
+        ?.results.filter((r) => r.best_lap_time !== -1 && r.car_class_id === race.car_class_id)
         .sort((a, b) => a.best_lap_time - b.best_lap_time)[0];
 
     const carNumber =
         raceDetails.session_results
-            .find((r) => r.simsession_number === 0)
-            .results.sort((a, b) => b.oldi_rating - a.oldi_rating)
+            .find((r) => r.simsession_name === 'RACE')
+            ?.results.sort((a, b) => b.oldi_rating - a.oldi_rating)
             .findIndex((r) => r.cust_id === custId) + 1;
 
-    return { race, qualifying, poleposition, winner, fastestLap, carNumber };
+    const classParticipants = raceDetails.session_results
+        .find((r) => r.simsession_name === 'RACE')
+        ?.results.filter((r) => r.car_class_id === race.car_class_id);
+
+    console.log(JSON.stringify(classParticipants), '\n\n\n');
+
+    const sof = classParticipants
+        ? classParticipants.reduce((a, b) => a + b.oldi_rating, 0) / classParticipants.length
+        : undefined;
+
+    return {
+        race,
+        qualifying,
+        poleposition,
+        winner,
+        fastestLap,
+        carNumber,
+        sof,
+    };
 }
 
 export async function getLapData(instance, subSessionId, custId) {
