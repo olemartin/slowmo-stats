@@ -24,7 +24,7 @@ const graphImprovementLastWeek = async (instance, rosterData, category, team) =>
     const data = (
         await Promise.all(
             rosterData.map(async (member) => {
-                const stats = await fetchMembersLatest(instance, member, 5);
+                const stats = await fetchMembersLatest(instance, member, [5]);
                 const races = await Promise.all(
                     stats
                         .filter((r) => {
@@ -73,7 +73,7 @@ const graphMostPopularSeriesLastWeek = async (instance, rosterData) => {
     const allSeries = [];
     await Promise.all(
         rosterData.map(async (member) => {
-            const stats = await fetchMembersLatest(instance, member, 5);
+            const stats = await fetchMembersLatest(instance, member, [5]);
             if (stats) {
                 const series = stats.map((r) => r.series_name);
                 allSeries.push(series);

@@ -322,8 +322,6 @@ function getEmbeds(race, member, splitInformation, raceDetails) {
 }
 
 export const postToDiscord = async (instance, race, raceDetails, splitInformation, member, team) => {
-    console.log(JSON.stringify(race));
-
     const embeds = getEmbeds(race, member, splitInformation, raceDetails);
 
     if (process.env[team.discordUrl]) {

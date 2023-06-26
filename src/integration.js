@@ -15,7 +15,7 @@ export async function fetchMembersLatest(instance, member, types, latestRace) {
             cust_id: member.cust_id,
             finish_range_begin: finishRangeBegin,
             official_only: true,
-            event_types: types.join(','),
+            event_types: types ? types.join(',') : undefined,
         },
     });
     if (memberResponse.data.data.chunk_info.rows > 0) {
@@ -182,8 +182,6 @@ export async function getSubsession(instance, subSessionId, custId) {
     const classParticipants = raceDetails.session_results
         .find((r) => r.simsession_name === 'RACE')
         ?.results.filter((r) => r.car_class_id === race.car_class_id);
-
-    console.log(JSON.stringify(classParticipants), '\n\n\n');
 
     const sof = classParticipants
         ? classParticipants.reduce((a, b) => a + b.oldi_rating, 0) / classParticipants.length
