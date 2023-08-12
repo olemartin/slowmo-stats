@@ -4,6 +4,7 @@ import { auth } from './auth.js';
 import { createClient } from 'redis';
 import teams from './teams.json' assert { type: 'json' };
 import { postToDiscord } from './discord.js';
+import { chartLaps } from './chart-laps.js';
 
 dotenv.config();
 
@@ -45,7 +46,12 @@ redis.connect().then(async () => {
                     5
                 );
                 const raceDetails = await getSubsession(instance, race.subsession_id, member.cust_id);
-                await postToDiscord(instance, race, raceDetails, splitInformation, member, team);
+                const chartData = await chartLaps({
+                    instance,
+                    subSessionId: race.subsession_id,
+                    custId: member.cust_id,
+                });
+                await postToDiscord({ instance, race, raceDetails, splitInformation, member, team, chartData });
             }
 
             if (races.length > 0) {

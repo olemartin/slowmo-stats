@@ -13,6 +13,7 @@ import { createAverageSerie } from './averaging.js';
 import { chartData } from './chart.js';
 import { auth } from './auth.js';
 import teams from './teams.json' assert { type: 'json' };
+import otherTeams from './otherTeams.json' assert { type: 'json' };
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -245,6 +246,17 @@ const run = async () => {
                 avatar_url: 'https://cdn-icons-png.flaticon.com/512/4778/4778417.png',
                 content: 'Ukens statistikk',
                 embeds: graphUrls.map((u) => ({ image: { url: u } })),
+            });
+        }
+    }
+    for (const team of otherTeams) {
+        const roster = await fetchTeamData(instance, team.teamId);
+        const graph = await graphMostActiveMembersLastWeek(instance, roster, team);
+        if (process.env[team.discordUrl]) {
+            await instance.post(process.env[team.discordUrl], {
+                username: `${team.teamName} stats`,
+                avatar_url: 'https://cdn-icons-png.flaticon.com/512/4778/4778417.png',
+                embeds: [{ image: { url: graph } }],
             });
         }
     }

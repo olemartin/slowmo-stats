@@ -46,7 +46,7 @@ export async function getSplitInformation(instance, sessionId, subsessionId, sta
 
         const splitsFiltered = splits.data
             .filter((s) => s.session_id === sessionId)
-            .sort((a, b) => b.event_strength_of_field - a.event_strength_of_field);
+            .sort((a, b) => a.subsession_id - b.subsession_id);
         const splitIndex = splitsFiltered.findIndex((s) => s.subsession_id === subsessionId);
         return { splits: splitsFiltered.length, splitId: splitIndex + 1 };
     }

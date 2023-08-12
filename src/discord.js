@@ -1,5 +1,6 @@
 import { format, formatInTimeZone } from 'date-fns-tz';
 import nb from 'date-fns/locale/nb/index.js';
+import { chartCustomData } from './chart.js';
 
 const safetyFormatter = new Intl.NumberFormat('nb-NB', {
     signDisplay: 'exceptZero',
@@ -321,15 +322,20 @@ function getEmbeds(race, member, splitInformation, raceDetails) {
     }
 }
 
-export const postToDiscord = async (instance, race, raceDetails, splitInformation, member, team) => {
+export const postToDiscord = async ({ instance, race, raceDetails, splitInformation, member, team, chartData }) => {
     const embeds = getEmbeds(race, member, splitInformation, raceDetails);
 
     if (process.env[team.discordUrl]) {
-        await instance.post(process.env[team.discordUrl], {
+        const discordData = {
             username: `${team.teamName} racebot`,
             title: `${team.memberName} has raced`,
             avatar_url: 'https://cdn-icons-png.flaticon.com/512/65/65578.png',
-            embeds,
-        });
+            embeds: [
+                ...embeds,
+                { image: { url: await chartCustomData({ chart: chartData.positionChart }) } },
+                { image: { url: await chartCustomData({ chart: chartData.laptimeChart }) } },
+            ],
+        };
+        await instance.post(process.env[team.discordUrl], discordData);
     }
 };

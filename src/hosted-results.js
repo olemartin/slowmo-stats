@@ -52,7 +52,6 @@ const getSessions = async () => {
 
     const times = await Promise.all(
         sessions.map(async (user) => {
-            //console.log(user)
             const response = await instance.get('/data/results/lap_data', {
                 params: {
                     simsession_number: 0,

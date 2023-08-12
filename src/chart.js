@@ -101,3 +101,14 @@ export const chartData = async (type, labels, data, title) => {
     console.log(shorten.data.url);
     return shorten.data.url;
 };
+
+export const chartCustomData = async ({ chart }) => {
+    const shorten = await axios.post(`${BASE_URL}/create`, {
+        chart: stringify(chart),
+        width: 1000,
+        height: 500,
+        backgroundColor: '#CCCCCC',
+    });
+    console.log(shorten.data.url);
+    return shorten.data.url;
+};
