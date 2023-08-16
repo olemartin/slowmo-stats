@@ -324,17 +324,20 @@ function getEmbeds(race, member, splitInformation, raceDetails) {
 
 export const postToDiscord = async ({ instance, race, raceDetails, splitInformation, member, team, chartData }) => {
     const embeds = getEmbeds(race, member, splitInformation, raceDetails);
+    const charts =
+        chartData.positionChart && chartData.laptimeChart
+            ? [
+                  { image: { url: await chartCustomData({ chart: chartData.positionChart }) } },
+                  { image: { url: await chartCustomData({ chart: chartData.laptimeChart }) } },
+              ]
+            : [];
 
     if (process.env[team.discordUrl]) {
         const discordData = {
             username: `${team.teamName} racebot`,
             title: `${team.memberName} has raced`,
             avatar_url: 'https://cdn-icons-png.flaticon.com/512/65/65578.png',
-            embeds: [
-                ...embeds,
-                { image: { url: await chartCustomData({ chart: chartData.positionChart }) } },
-                { image: { url: await chartCustomData({ chart: chartData.laptimeChart }) } },
-            ],
+            embeds: [...embeds, ...charts],
         };
         await instance.post(process.env[team.discordUrl], discordData);
     }

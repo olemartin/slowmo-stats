@@ -42,8 +42,12 @@ export const chartLaps = async ({ instance, subSessionId, custId }) => {
                     }))
             );
         }
-        const minTime = lapTimes.filter((l) => !!l && l.time !== -1).sort((a, b) => a.time - b.time)[0];
-        const maxTime = lapTimes.filter((l) => !!l && l.time !== -1).sort((a, b) => b.time - a.time)[0];
+        if (!lapTimes.find((l) => !!l && l.time !== -1)) {
+            return { laptimeChart: null, positionChart: null };
+        }
+
+        const minTime = lapTimes.filter((l) => l.time !== -1).sort((a, b) => a.time - b.time)[0];
+        const maxTime = lapTimes.filter((l) => l.time !== -1).sort((a, b) => b.time - a.time)[0];
         const minPosition = lapTimes.sort((a, b) => a.position - b.position)[0];
         const maxPosition = lapTimes.sort((a, b) => b.position - a.position)[0];
 
