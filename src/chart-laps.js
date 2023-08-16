@@ -60,8 +60,11 @@ export const chartLaps = async ({ instance, subSessionId, custId }) => {
                 datasets: [
                     {
                         type: 'line',
+                        fill: false,
                         borderColor: '#404090',
                         backgroundColor: 'rgba(0,0,0,0)',
+                        pointBorderColor: lapTimes.map((l) => (l.incs ? '#F00' : '#000')),
+                        pointBackgroundColor: lapTimes.map((l) => (l.incs ? '#F00' : '#000')),
                         data: lapTimes.map((l) => mapLapTime({ lapTime: l })),
                     },
                 ],
@@ -98,8 +101,11 @@ export const chartLaps = async ({ instance, subSessionId, custId }) => {
                 datasets: [
                     {
                         type: 'line',
+                        fill: false,
                         borderColor: '#404090',
                         data: lapTimes.map((l) => mapPosition({ lapTime: l })),
+                        pointBorderColor: lapTimes.map((l) => (l.incs ? '#F00' : '#000')),
+                        pointBackgroundColor: lapTimes.map((l) => (l.incs ? '#F00' : '#000')),
                         backgroundColor: 'rgba(0,0,0,0)',
                     },
                 ],
