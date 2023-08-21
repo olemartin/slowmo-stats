@@ -3,30 +3,30 @@
     "teamName": "SimRacing Norway",
     "memberName": "SRN",
     "teamId": 249973,
-    "discordUrl": "CHAPTER_WEBHOOK"
+    "discordUrl": "CHAPTER_OTHER_WEBHOOK"
   },
   {
     "teamName": "Silverfox Racing",
     "memberName": "Silver",
     "teamId": 175060,
-    "discordUrl": "CHAPTER_WEBHOOK"
+    "discordUrl": "CHAPTER_OTHER_WEBHOOK"
   },
   {
     "teamName": "IGL Coating",
     "memberName": "IGL",
     "teamId": 142964,
-    "discordUrl": "CHAPTER_WEBHOOK"
+    "discordUrl": "CHAPTER_OTHER_WEBHOOK"
   },
   {
     "teamName": "Prestanda Nomad",
     "memberName": "Nomad",
     "teamId": 302904,
-    "discordUrl": "CHAPTER_WEBHOOK"
+    "discordUrl": "CHAPTER_OTHER_WEBHOOK"
   },
   {
     "teamName": "SloWmo",
     "memberName": "SlowMo",
     "teamId": 142955,
-    "discordUrl": "CHAPTER_WEBHOOK"
+    "discordUrl": "CHAPTER_OTHER_WEBHOOK"
   }
 ]

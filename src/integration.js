@@ -195,16 +195,42 @@ export async function getSubsession(instance, subSessionId, custId) {
         fastestLap,
         carNumber,
         sof,
+        classParticipants,
     };
 }
 
-export async function getLapData(instance, subSessionId, custId) {
-    const session = await instance.get('/data/results/lap_data', {
+export async function getLaps(instance, subSessionId, custId) {
+    const response = await instance.get('/data/results/lap_chart_data', {
         params: {
             subsession_id: subSessionId,
-            cust_id: custId,
+            simsession_number: 0,
         },
     });
-    const data = await instance.get(session.data.link);
-    return data;
+
+    const s3Response = await instance.get(response.data.link);
+
+    if (s3Response.data.chunk_info?.base_download_url) {
+        const lapTimes = [];
+
+        for (const chunkFileName of s3Response.data.chunk_info.chunk_file_names) {
+            const url = s3Response.data.chunk_info.base_download_url + chunkFileName;
+            const laps = (await instance.get(url)).data;
+            lapTimes.push(
+                ...laps
+                    .filter((l) => l.cust_id === custId)
+                    .filter((l) => l.lap_number !== 0)
+                    .map((l) => ({
+                        time: l.lap_time,
+                        personalBestLap: l.personal_best_lap,
+                        fastestLap: l.fastest_lap,
+                        incs: l.incident,
+                        position: l.lap_position,
+                        lapNumber: l.lap_number,
+                        events: l.lap_events,
+                    }))
+            );
+        }
+        return lapTimes;
+    }
+    return [];
 }

@@ -1,10 +1,11 @@
 import dotenv from 'dotenv';
-import { fetchMembersLatest, fetchTeamData, getSplitInformation, getSubsession } from './integration.js';
+import { fetchMembersLatest, fetchTeamData, getLaps, getSplitInformation, getSubsession } from './integration.js';
 import { auth } from './auth.js';
 import { createClient } from 'redis';
 import teams from './teams.json' assert { type: 'json' };
 import { postToDiscord } from './discord.js';
 import { chartLaps } from './chart-laps.js';
+import { getRaceSummary } from './chat-gpt-summary.js';
 
 dotenv.config();
 
@@ -27,16 +28,18 @@ redis.connect().then(async () => {
         const roster = await fetchTeamData(instance, team.teamId);
         // const team = teams[0];
         // const roster = [
-        //     { cust_id: 505047, display_name: 'Ole-Martin Mørk' },
+        // { cust_id: 433879, display_name: 'Sveinung Mathisen' },
+        // { cust_id: 505047, display_name: 'Ole-Martin Mørk' },
         //     { cust_id: 779960, display_name: 'Ingar Almklov' },
         //     { cust_id: 172053, display_name: 'Magnus Bjerkaker' },
-        //];
+        // ];
         for (const member of roster) {
             const latestRace = await (process.env.SEND_ALL_RACES ? undefined : getLatestRace(member.cust_id));
             const races = await fetchMembersLatest(instance, member, [3, 5], latestRace);
 
             //const hosted = fetchMembersHosted(instance, member, endTime);
             for (const race of races) {
+                console.log({ subSessionId: race.subsession_id, custId: member.cust_id });
                 const splitInformation = await getSplitInformation(
                     instance,
                     race.session_id,
@@ -46,14 +49,25 @@ redis.connect().then(async () => {
                     5
                 );
                 const raceDetails = await getSubsession(instance, race.subsession_id, member.cust_id);
+                const lapTimes = await getLaps(instance, race.subsession_id, member.cust_id);
                 const chartData = await chartLaps({
                     instance,
                     subSessionId: race.subsession_id,
                     custId: member.cust_id,
+                    lapTimes,
                 });
-                await postToDiscord({ instance, race, raceDetails, splitInformation, member, team, chartData });
+                const raceSummary = await getRaceSummary({ lapTimes, raceDetails, team, member, race });
+                await postToDiscord({
+                    instance,
+                    race,
+                    raceDetails,
+                    splitInformation,
+                    member,
+                    team,
+                    chartData,
+                    raceSummary,
+                });
             }
-
             if (races.length > 0) {
                 const latestRace = races.sort(
                     (a, b) => new Date(b.end_time).getTime() - new Date(a.end_time).getTime()

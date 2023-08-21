@@ -322,7 +322,16 @@ function getEmbeds(race, member, splitInformation, raceDetails) {
     }
 }
 
-export const postToDiscord = async ({ instance, race, raceDetails, splitInformation, member, team, chartData }) => {
+export const postToDiscord = async ({
+    instance,
+    race,
+    raceDetails,
+    splitInformation,
+    member,
+    team,
+    chartData,
+    raceSummary,
+}) => {
     const embeds = getEmbeds(race, member, splitInformation, raceDetails);
     const charts =
         chartData.positionChart && chartData.laptimeChart
@@ -337,7 +346,7 @@ export const postToDiscord = async ({ instance, race, raceDetails, splitInformat
             username: `${team.teamName} racebot`,
             title: `${team.memberName} has raced`,
             avatar_url: 'https://cdn-icons-png.flaticon.com/512/65/65578.png',
-            embeds: [...embeds, ...charts],
+            embeds: [...embeds, ...charts, ...(raceSummary ? [{ title: 'Summary', description: raceSummary }] : [])],
         };
         await instance.post(process.env[team.discordUrl], discordData);
     }
