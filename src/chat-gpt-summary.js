@@ -2,6 +2,7 @@ import { format } from 'date-fns-tz';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import { mapLapTime } from './chart-laps.js';
+import { formatLicense } from './discord.js';
 dotenv.config();
 
 const ratingFormatter = new Intl.NumberFormat('nb-NB', { maximumFractionDigits: 0 });
@@ -17,7 +18,7 @@ export const generateGptText = ({ laps, driver, carType, race }) => {
     const lapText = laps.map((lap) => {
         return `${lap.lapNumber}. ${lap.position}. position, ${lap.events.join(', ') || 'clean lap'} ${
             lap.personalBestLap ? ', his fastest lap' : ''
-        }, time: ${mapLapTime({ lapTime: lap, formatString: `m 'minutes', s 'seconds', S 'milliseconds'` })}`;
+        }, time: ${mapLapTime({ lapTime: lap })}`;
     });
 
     const base = `
@@ -31,7 +32,7 @@ Driver's irating: ${driver.irating}
 irating gained: ${driver.iratingDifference}
 Qualified position: ${driver.qualify.position}
 Finished position: ${driver.race.position}
-safety rating increase: ${driver.sratingDifference}
+new safety rating: ${driver.sratingDifference}
 Laps: 
 ${lapText.join('\n')}
 Number of drivers: ${race.numDrivers}
@@ -66,8 +67,7 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
                 incidents: race.incidents,
                 irating: raceDetails.race.oldi_rating,
                 iratingDifference: diffFormatter.format(raceDetails.race.newi_rating - raceDetails.race.oldi_rating),
-                sratingDifference:
-                    race.new_sub_level === race.old_sub_level ? 0 : (race.new_sub_level - race.old_sub_level) / 100.0,
+                sratingDifference: formatLicense(raceDetails.race),
                 name: member.display_name,
                 race: {
                     position: race.finish_position_in_class + 1,
@@ -89,19 +89,20 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
                         It should be mostly funny, but also informative with some insights in how the race went. Be NSFW and swearing is allowed.
  Also include some quotes from the driver. The report should be funny and witty. If the driver does something bad, be rude and call him names. 
  Keep it short, max 400 words and 5 paragraphs.
- Focus on ${data.driver.name} and how his race progressed`,
+ Focus on ${data.driver.name} and how his race progressed through the laps`,
                     },
                     { role: 'user', content: text },
                 ],
                 model: 'gpt-3.5-turbo',
             });
 
-            return completion.choices[0].message.content;
+            const result = completion.choices[0].message.content;
+            console.log(result);
+            return result;
         } catch (e) {
             console.error('error creating gpt summary', e);
             return null;
         }
-        return text;
     } else {
         console.log('Not enough data');
         console.log({ lapTimes, raceDetails, team, member, race });

@@ -36,7 +36,7 @@ const mapLicense = (license) => {
     return 'P';
 };
 
-const formatLicense = (race) => {
+export const formatLicense = (race) => {
     const newLic = mapLicense(race.new_license_level);
     const oldLic = mapLicense(race.old_license_level);
     const newSub = race.new_sub_level;
