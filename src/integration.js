@@ -1,7 +1,7 @@
 import { startOfDay, subWeeks, addMinutes, subMinutes, parseISO, subDays, isBefore } from 'date-fns';
 
 export async function fetchMembersLatest(instance, member, types, latestRace) {
-    const startTime = subWeeks(startOfDay(new Date()), 1);
+    const startTime = subWeeks(startOfDay(new Date()), 4);
     const minTime = subDays(startOfDay(new Date()), 89);
 
     const finishRangeBegin = latestRace?.endTime

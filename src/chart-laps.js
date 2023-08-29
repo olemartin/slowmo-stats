@@ -8,7 +8,6 @@ export const mapLapTime = ({ lapTime, add, formatString = 'mm:ss.SSS' }) => {
     return format(t, formatString);
 };
 const mapPosition = ({ lapTime, add }) => {
-    //console.log({ lapTime, add });
     return lapTime.position + (add || 0);
 };
 

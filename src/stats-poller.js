@@ -28,15 +28,15 @@ redis.connect().then(async () => {
         const roster = await fetchTeamData(instance, team.teamId);
         // const team = teams[0];
         // const roster = [
+        //{ cust_id: 172053, display_name: 'Magnus Fløttum Bjerkaker' },
         // { cust_id: 433879, display_name: 'Sveinung Mathisen' },
         // { cust_id: 505047, display_name: 'Ole-Martin Mørk' },
-        //     { cust_id: 779960, display_name: 'Ingar Almklov' },
+        //{ cust_id: 779960, display_name: 'Ingar Almklov' },
         //     { cust_id: 172053, display_name: 'Magnus Bjerkaker' },
         // ];
         for (const member of roster) {
             const latestRace = await (process.env.SEND_ALL_RACES ? undefined : getLatestRace(member.cust_id));
             const races = await fetchMembersLatest(instance, member, [3, 5], latestRace);
-
             //const hosted = fetchMembersHosted(instance, member, endTime);
             for (const race of races) {
                 console.log({ subSessionId: race.subsession_id, custId: member.cust_id });
@@ -56,7 +56,7 @@ redis.connect().then(async () => {
                     custId: member.cust_id,
                     lapTimes,
                 });
-                const raceSummary = await getRaceSummary({ lapTimes, raceDetails, team, member, race });
+                const raceSummary = await getRaceSummary({ lapTimes, raceDetails, team, member, race, races });
                 await postToDiscord({
                     instance,
                     race,

@@ -35,7 +35,19 @@ const mapLicense = (license) => {
     }
     return 'P';
 };
+export const formatLicenseForSummary = (race) => {
+    const newLic = mapLicense(race.new_license_level);
+    const oldLic = mapLicense(race.old_license_level);
+    const newSub = race.new_sub_level;
+    const oldSub = race.old_sub_level;
 
+    if (newLic === oldLic) {
+        return safetyFormatter.format((newSub - oldSub) / 100.0);
+    }
+    return `From ${oldLic} ${safetyMajorFormatter.format(oldSub / 100.0)} to ${newLic} ${safetyMajorFormatter.format(
+        newSub / 100.0
+    )}`;
+};
 export const formatLicense = (race) => {
     const newLic = mapLicense(race.new_license_level);
     const oldLic = mapLicense(race.old_license_level);

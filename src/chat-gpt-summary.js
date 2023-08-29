@@ -2,7 +2,7 @@ import { format } from 'date-fns-tz';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import { mapLapTime } from './chart-laps.js';
-import { formatLicense } from './discord.js';
+import { formatLicenseForSummary } from './discord.js';
 dotenv.config();
 
 const ratingFormatter = new Intl.NumberFormat('nb-NB', { maximumFractionDigits: 0 });
@@ -14,14 +14,19 @@ const openai = new OpenAI({
     apiKey: process.env.OPEN_AI_API_KEY,
 });
 
-export const generateGptText = ({ laps, driver, carType, race }) => {
+export const generateGptText = ({ laps, driver, carType, race, previousRaces }) => {
     const lapText = laps.map((lap) => {
-        return `${lap.lapNumber}. ${lap.position}. position, ${lap.events.join(', ') || 'clean lap'} ${
+        return ` - ${lap.lapNumber}. ${lap.position}. position, ${lap.events.join(', ') || 'clean lap'} ${
             lap.personalBestLap ? ', his fastest lap' : ''
         }, time: ${mapLapTime({ lapTime: lap })}`;
     });
 
+    const previousRacesText = previousRaces.map(
+        (race) => ` - Raced at ${race.raced_at}: Incidents: ${race.incidents}, position: ${race.position}`
+    );
+
     const base = `
+Raced at: ${race.raceTime}
 Name of driver in focus: ${driver.name}
 Name of race: ${race.name}
 Incident points: ${driver.incidents}
@@ -32,9 +37,11 @@ Driver's irating: ${driver.irating}
 irating gained: ${driver.iratingDifference}
 Qualified position: ${driver.qualify.position}
 Finished position: ${driver.race.position}
-new safety rating: ${driver.sratingDifference}
+Safety rating difference: ${driver.sratingDifference}
 Laps: 
 ${lapText.join('\n')}
+Previous races:
+${previousRacesText.join('\n')}
 Number of drivers: ${race.numDrivers}
 Winner: ${race.winner.name}
 Fastest lap of the race: ${race.fastestLap.time} by ${race.fastestLap.name}
@@ -43,10 +50,17 @@ Fastest lap of the race: ${race.fastestLap.time} by ${race.fastestLap.name}
     return base;
 };
 
-export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race }) => {
+export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race, races }) => {
     if (race && raceDetails && lapTimes?.length > 0 && team && member) {
+        const previousRaces = races.reverse().map((race) => ({
+            position: race.finish_position_in_class + 1,
+            incidents: race.incidents,
+            raced_at: race.start_time,
+        }));
         const data = {
+            previousRaces,
             race: {
+                raceTime: race.start_time,
                 name: race.series_short_name,
                 track: race.track.track_name,
                 winner: {
@@ -67,7 +81,7 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
                 incidents: race.incidents,
                 irating: raceDetails.race.oldi_rating,
                 iratingDifference: diffFormatter.format(raceDetails.race.newi_rating - raceDetails.race.oldi_rating),
-                sratingDifference: formatLicense(raceDetails.race),
+                sratingDifference: formatLicenseForSummary(raceDetails.race),
                 name: member.display_name,
                 race: {
                     position: race.finish_position_in_class + 1,
@@ -78,7 +92,13 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
                 },
             },
         };
-        const text = generateGptText({ laps: lapTimes, driver: data.driver, carType: data.carType, race: data.race });
+        const text = generateGptText({
+            laps: lapTimes,
+            driver: data.driver,
+            carType: data.carType,
+            race: data.race,
+            previousRaces: data.previousRaces,
+        });
 
         try {
             const completion = await openai.chat.completions.create({
@@ -89,7 +109,7 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
                         It should be mostly funny, but also informative with some insights in how the race went. Be NSFW and swearing is allowed.
  Also include some quotes from the driver. The report should be funny and witty. If the driver does something bad, be rude and call him names. 
  Keep it short, max 400 words and 5 paragraphs.
- Focus on ${data.driver.name} and how his race progressed through the laps`,
+ Focus on ${data.driver.name} and how his race progressed through the laps compared how he has performed in earlier races.`,
                     },
                     { role: 'user', content: text },
                 ],
@@ -105,7 +125,6 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
         }
     } else {
         console.log('Not enough data');
-        console.log({ lapTimes, raceDetails, team, member, race });
         return null;
     }
 };
