@@ -22,7 +22,7 @@ export const generateGptText = ({ laps, driver, carType, race, previousRaces }) 
     });
 
     const previousRacesText = previousRaces.map(
-        (race) => ` - Raced at ${race.raced_at}: Incidents: ${race.incidents}, position: ${race.position}`
+        (race) => ` - Raced at ${race.raced_at}: Incident points: ${race.incidents}, finish position: ${race.position}`
     );
 
     const base = `
@@ -67,10 +67,9 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
                     name: raceDetails.winner?.display_name || '',
                 },
                 fastestLap: {
-                    time: format(
-                        raceDetails.fastestLap ? new Date(raceDetails.fastestLap.best_lap_time / 10) : undefined,
-                        'mm:ss.SSS'
-                    ),
+                    time: raceDetails.fastestLap
+                        ? format(new Date(raceDetails.fastestLap.best_lap_time / 10), 'mm:ss.SSS')
+                        : undefined,
                     name: raceDetails.fastestLap?.display_name || '',
                 },
                 sof: Math.round(raceDetails.sof || race.event_strength_of_field),
