@@ -36,7 +36,7 @@ redis.connect().then(async () => {
         // ];
         for (const member of roster) {
             const latestRace = await (process.env.SEND_ALL_RACES ? undefined : getLatestRace(member.cust_id));
-            const races = await fetchMembersLatest(instance, member, [3, 5], latestRace);
+            const races = await fetchMembersLatest(instance, member, [3, 5], latestRace, 4);
             //const hosted = fetchMembersHosted(instance, member, endTime);
             for (const race of races) {
                 console.log({ subSessionId: race.subsession_id, custId: member.cust_id });
