@@ -17,7 +17,7 @@ const openai = new OpenAI({
 export const generateGptText = ({ laps, driver, carType, race, previousRaces }) => {
     const lapText = laps.map((lap) => {
         return ` - ${lap.lapNumber}. ${lap.position}. position, ${lap.events.join(', ') || 'clean lap'} ${
-            lap.personalBestLap ? ', his fastest lap' : ''
+            lap.personalBestLap ? ', his fastest lap of this race' : ''
         }, time: ${mapLapTime({ lapTime: lap })}`;
     });
 
@@ -106,8 +106,8 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
                         role: 'system',
                         content: `I want you to create a report of a race in iRacing. 
                         It should be mostly funny, but also informative with some insights in how the race went. Be NSFW and swearing is allowed.
- Also include some quotes from the driver. The report should be funny and witty. If the driver does something bad, be rude and call him names. 
- Keep it short, max 400 words and 5 paragraphs.
+                        The report should be funny and witty. If the driver does something bad, be rude and call him names. 
+ Keep it short, max 400 words and 5 paragraphs. Pitting is not a bad thing. If the irating gained is positive, you should also be positive. Everything over 50 points gained is amazing!
  Focus on ${data.driver.name} and how his race progressed through the laps compared how he has performed in earlier races.`,
                     },
                     { role: 'user', content: text },
