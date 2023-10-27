@@ -49,7 +49,12 @@ redis.connect().then(async () => {
                     5
                 );
                 const raceDetails = await getSubsession(instance, race.subsession_id, member.cust_id);
-                const lapTimes = await getLaps(instance, race.subsession_id, member.cust_id);
+                const lapTimes = await getLaps(
+                    instance,
+                    race.subsession_id,
+                    member.cust_id,
+                    raceDetails.classParticipants
+                );
                 const chartData = await chartLaps({
                     instance,
                     subSessionId: race.subsession_id,

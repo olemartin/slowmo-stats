@@ -16,7 +16,7 @@ const openai = new OpenAI({
 
 export const generateGptText = ({ laps, driver, carType, race, previousRaces }) => {
     const lapText = laps.map((lap) => {
-        return ` - ${lap.lapNumber}. ${lap.position}. position, ${lap.events.join(', ') || 'clean lap'} ${
+        return ` - ${lap.lapNumber}. ${lap.classPosition}. position, ${lap.events.join(', ') || 'clean lap'} ${
             lap.personalBestLap ? ', his fastest lap of this race' : ''
         }, time: ${mapLapTime({ lapTime: lap })}`;
     });
@@ -105,13 +105,17 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
                     {
                         role: 'system',
                         content: `I want you to create a report of a race in iRacing. 
-                        It should be mostly funny, but also informative with some insights in how the race went. Be NSFW and swearing is allowed.
+                        It should be mostly funny, but also informative with some insights in how the race went. 
                         The report should be funny and witty. If the driver does something bad, be rude and call him names. 
- Keep it short, max 400 words and 5 paragraphs. Pitting is not a bad thing. If the irating gained is positive, you should also be positive. Everything over 50 points gained is amazing!
- Focus on ${data.driver.name} and how his race progressed through the laps compared how he has performed in earlier races.`,
+ Keep it short, max 400 words and 5 paragraphs. Pitting is not a bad thing. If the irating gained is positive, you should also be positive. 
+ Everything over 50 points gained is amazing!
+ Focus on ${data.driver.name} and how his race progressed through the laps compared to how he has performed in earlier races. 
+ Compare the driver's laptimes to each other, and to other drivers`,
                     },
                     { role: 'user', content: text },
                 ],
+                temperature: 0.1,
+                //max_tokens: 300,
                 model: 'gpt-3.5-turbo',
             });
 

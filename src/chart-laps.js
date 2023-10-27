@@ -8,7 +8,7 @@ export const mapLapTime = ({ lapTime, add, formatString = 'mm:ss.SSS' }) => {
     return format(t, formatString);
 };
 const mapPosition = ({ lapTime, add }) => {
-    return lapTime.position + (add || 0);
+    return lapTime.classPosition + (add || 0);
 };
 
 export const chartLaps = async ({ lapTimes }) => {
@@ -18,8 +18,8 @@ export const chartLaps = async ({ lapTimes }) => {
 
     const minTime = lapTimes.filter((l) => l.time !== -1).sort((a, b) => a.time - b.time)[0];
     const maxTime = lapTimes.filter((l) => l.time !== -1).sort((a, b) => b.time - a.time)[0];
-    const minPosition = lapTimes.sort((a, b) => a.position - b.position)[0];
-    const maxPosition = lapTimes.sort((a, b) => b.position - a.position)[0];
+    const minPosition = lapTimes.sort((a, b) => a.classPosition - b.classPosition)[0];
+    const maxPosition = lapTimes.sort((a, b) => b.classPosition - a.classPosition)[0];
 
     lapTimes.sort((a, b) => a.lapNumber - b.lapNumber);
 
@@ -101,6 +101,6 @@ export const chartLaps = async ({ lapTimes }) => {
         },
     };
 
-    console.log(JSON.stringify({ laptimeChart, positionChart }));
+    //console.log(JSON.stringify({ laptimeChart, positionChart }));
     return { laptimeChart, positionChart };
 };

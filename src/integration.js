@@ -1,4 +1,4 @@
-import { startOfDay, subWeeks, addMinutes, subMinutes, parseISO, subDays, isBefore } from 'date-fns';
+import { addMinutes, isBefore, parseISO, startOfDay, subDays, subMinutes, subWeeks } from 'date-fns';
 
 export async function fetchMembersLatest(instance, member, types, latestRace, numWeeks = 1) {
     const startTime = subWeeks(startOfDay(new Date()), numWeeks);
@@ -149,6 +149,7 @@ export async function getSubsession(instance, subSessionId, custId) {
 
     const data = await instance.get(session.data.link);
     const raceDetails = data.data;
+
     if (raceDetails.driver_changes) {
         return getTeamDriver(raceDetails, custId);
     }
@@ -199,7 +200,7 @@ export async function getSubsession(instance, subSessionId, custId) {
     };
 }
 
-export async function getLaps(instance, subSessionId, custId) {
+export async function getLaps(instance, subSessionId, custId, classParticipants) {
     const response = await instance.get('/data/results/lap_chart_data', {
         params: {
             subsession_id: subSessionId,
@@ -217,7 +218,7 @@ export async function getLaps(instance, subSessionId, custId) {
             const laps = (await instance.get(url)).data;
             lapTimes.push(
                 ...laps
-                    .filter((l) => l.cust_id === custId)
+                    .filter((l) => classParticipants.find((c) => c.cust_id === l.cust_id))
                     .filter((l) => l.lap_number !== 0)
                     .map((l) => ({
                         time: l.lap_time,
@@ -227,10 +228,27 @@ export async function getLaps(instance, subSessionId, custId) {
                         position: l.lap_position,
                         lapNumber: l.lap_number,
                         events: l.lap_events,
+                        custId: l.cust_id,
                     }))
             );
         }
-        return lapTimes;
+        lapTimes.sort((a, b) =>
+            a.lapNumber < b.lapNumber ? -1 : a.lapNumber > b.lapNumber ? 1 : a.position - b.position
+        );
+        lapTimes.forEach((l, index) => {
+            if (!lapTimes[index - 1]) {
+                l.classPosition = 1;
+            } else if (lapTimes[index - 1].lapNumber !== l.lapNumber) {
+                l.classPosition = 1;
+            } else {
+                l.classPosition = lapTimes[index - 1].classPosition + 1;
+            }
+
+            if (!lapTimes[index + 1]) {
+                return;
+            }
+        });
+        return lapTimes.filter((l) => l.custId === custId);
     }
     return [];
 }
