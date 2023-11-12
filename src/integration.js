@@ -184,6 +184,8 @@ export async function getSubsession(instance, subSessionId, custId) {
         .find((r) => r.simsession_name === 'RACE')
         ?.results.filter((r) => r.car_class_id === race.car_class_id);
 
+    const allParticipants = raceDetails.session_results.find((r) => r.simsession_name === 'RACE')?.results;
+
     const sof = classParticipants
         ? classParticipants.reduce((a, b) => a + b.oldi_rating, 0) / classParticipants.length
         : undefined;
@@ -197,6 +199,7 @@ export async function getSubsession(instance, subSessionId, custId) {
         carNumber,
         sof,
         classParticipants,
+        allParticipants,
     };
 }
 
