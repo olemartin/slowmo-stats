@@ -53,7 +53,7 @@ redis.connect().then(async () => {
                     instance,
                     race.subsession_id,
                     member.cust_id,
-                    raceDetails.classParticipants || raceDetails.allParticipants
+                    raceDetails.classParticipants || raceDetails.allParticipants || []
                 );
                 const chartData = await chartLaps({
                     instance,

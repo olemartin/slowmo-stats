@@ -73,7 +73,7 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
                     name: raceDetails.fastestLap?.display_name || '',
                 },
                 sof: Math.round(raceDetails.sof || race.event_strength_of_field),
-                numDrivers: raceDetails.classParticipants?.length,
+                numDrivers: raceDetails.classParticipants?.length || raceDetails.allParticipants?.length,
             },
             carType: race.car_name,
             driver: {
