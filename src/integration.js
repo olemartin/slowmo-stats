@@ -222,7 +222,6 @@ export async function getLaps(instance, subSessionId, custId, classParticipants)
             lapTimes.push(
                 ...laps
                     .filter((l) => classParticipants.find((c) => c.cust_id === l.cust_id))
-                    .filter((l) => l.lap_number !== 0)
                     .map((l) => ({
                         time: l.lap_time,
                         personalBestLap: l.personal_best_lap,
