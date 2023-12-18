@@ -233,6 +233,7 @@ const run = async () => {
             await graphIrData(roster, 'road', team),
             await graphHistoricDataForTeam(instance, roster, 2, 'road', team),
             await graphImprovementLastWeek(instance, roster, 'road', team),
+            await graphImprovementLastWeek(instance, roster, 'oval', team),
             //await graphSrData(instance, roster, "oval"),
             //await graphIrData(instance, roster, "oval"),
             //await graphHistoricDataForTeam(instance, roster, 1, "oval"),
