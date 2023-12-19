@@ -62,6 +62,10 @@ const graphImprovementLastWeek = async (instance, rosterData, category, team) =>
         )
     ).flat();
 
+    if (data.length === 0) {
+        return null;
+    }
+
     return chartData(
         'bar',
         data.map((r) => r.name),
@@ -234,6 +238,8 @@ const run = async () => {
             await graphHistoricDataForTeam(instance, roster, 2, 'road', team),
             await graphImprovementLastWeek(instance, roster, 'road', team),
             await graphImprovementLastWeek(instance, roster, 'oval', team),
+            await graphImprovementLastWeek(instance, roster, 'dirt_oval', team),
+            await graphImprovementLastWeek(instance, roster, 'dirt_road', team),
             //await graphSrData(instance, roster, "oval"),
             //await graphIrData(instance, roster, "oval"),
             //await graphHistoricDataForTeam(instance, roster, 1, "oval"),
@@ -246,20 +252,28 @@ const run = async () => {
                 username: `${team.teamName} stats`,
                 avatar_url: 'https://cdn-icons-png.flaticon.com/512/4778/4778417.png',
                 content: 'Ukens statistikk',
-                embeds: graphUrls.map((u) => ({ image: { url: u } })),
+                embeds: graphUrls.filter((u) => !!u).map((u) => ({ image: { url: u } })),
             });
         }
     }
+    const graphs = [];
     for (const team of otherTeams) {
         const roster = await fetchTeamData(instance, team.teamId);
-        const graph = await graphMostActiveMembersLastWeek(instance, roster, team);
-        if (process.env[team.discordUrl]) {
-            await instance.post(process.env[team.discordUrl], {
-                username: `${team.teamName} stats`,
-                avatar_url: 'https://cdn-icons-png.flaticon.com/512/4778/4778417.png',
-                embeds: [{ image: { url: graph } }],
-            });
-        }
+        graphs.push(await graphMostActiveMembersLastWeek(instance, roster, team));
+    }
+
+    if (process.env[team.discordUrl]) {
+        await instance.post(process.env[team.discordUrl], {
+            username: `Stats for other teams`,
+            avatar_url: 'https://cdn-icons-png.flaticon.com/512/4778/4778417.png',
+            embeds: graphs
+                .filter((u) => !!u)
+                .map((u) => ({
+                    image: {
+                        url: u,
+                    },
+                })),
+        });
     }
 };
 

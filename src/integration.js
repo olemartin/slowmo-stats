@@ -14,7 +14,7 @@ export async function fetchMembersLatest(instance, member, types, latestRace, nu
         params: {
             cust_id: member.cust_id,
             finish_range_begin: finishRangeBegin,
-            official_only: true,
+            official_only: false,
             event_types: types ? types.join(',') : undefined,
         },
     });
