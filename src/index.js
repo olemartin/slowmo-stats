@@ -36,8 +36,9 @@ const graphImprovementLastWeek = async (instance, rosterData, category, team) =>
                             differenceInMinutes(new Date(a.session_start_time), new Date(b.session_start_time))
                         )
                         .map(async (race) => await getSubsession(instance, race.subsession_id, member.cust_id))
-                        .map(async (race) => {
-                            const r = await race;
+                        .map(async r=> await r)
+                        .filter(r=> r.race)
+                        .map( (r) => {
                             return {
                                 n: r.race.newi_rating,
                                 o: r.race.oldi_rating,
