@@ -36,21 +36,26 @@ const graphImprovementLastWeek = async (instance, rosterData, category, team) =>
                             differenceInMinutes(new Date(a.session_start_time), new Date(b.session_start_time))
                         )
                         .map(async (race) => await getSubsession(instance, race.subsession_id, member.cust_id))
-                        .map(async r=> await r)
-                        .filter(r=> r.race)
-                        .map( (r) => {
-                            return {
-                                n: r.race.newi_rating,
-                                o: r.race.oldi_rating,
-                                ns: r.race.new_sub_level,
-                                os: r.race.old_sub_level,
-                                ll: r.race.license_level,
-                            };
+                        .map(async (s) => {
+                            const r = await s;
+                            if (r.race) {
+                                return {
+                                    n: r.race.newi_rating,
+                                    o: r.race.oldi_rating,
+                                    ns: r.race.new_sub_level,
+                                    os: r.race.old_sub_level,
+                                    ll: r.race.license_level,
+                                };
+                            } else {
+                                return null;
+                            }
                         })
                 );
-                if (races.length > 0) {
-                    const startIrating = races[0].o;
-                    const endIrating = races[races.length - 1].n;
+
+                const filteredRaces = races.filter((a) => !!a);
+                if (filteredRaces.length > 0) {
+                    const startIrating = filteredRaces[0].o;
+                    const endIrating = filteredRaces[filteredRaces.length - 1].n;
                     return [
                         {
                             name: member.display_name,
@@ -247,7 +252,7 @@ const run = async () => {
             //await graphImprovementLastWeek(instance, roster, "oval")
         ];
 
-        console.log(JSON.stringify(graphUrls.map((u) => ({ image: { url: u } }))));
+        console.log(JSON.stringify(graphUrls.filter((u) => !!u).map((u) => ({ image: { url: u } }))));
         if (process.env[team.discordUrl]) {
             await instance.post(process.env[team.discordUrl], {
                 username: `${team.teamName} stats`,
