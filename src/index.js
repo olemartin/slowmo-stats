@@ -268,8 +268,8 @@ const run = async () => {
         graphs.push(await graphMostActiveMembersLastWeek(instance, roster, team));
     }
 
-    if (process.env[team.discordUrl]) {
-        await instance.post(process.env[team.discordUrl], {
+    if (process.env['CHAPTER_OTHER_WEBHOOK']) {
+        await instance.post(process.env['CHAPTER_OTHER_WEBHOOK'], {
             username: `Stats for other teams`,
             avatar_url: 'https://cdn-icons-png.flaticon.com/512/4778/4778417.png',
             embeds: graphs

@@ -6,15 +6,15 @@
     "discordUrl": "CHAPTER_OTHER_WEBHOOK"
   },
   {
-    "teamName": "Silverfox Racing",
-    "memberName": "Silver",
-    "teamId": 175060,
-    "discordUrl": "CHAPTER_OTHER_WEBHOOK"
-  },
-  {
     "teamName": "IGL Coating",
     "memberName": "IGL",
     "teamId": 142964,
+    "discordUrl": "CHAPTER_OTHER_WEBHOOK"
+  },
+  {
+    "teamName": "Team Vikings",
+    "memberName": "Viking",
+    "teamId": 75647,
     "discordUrl": "CHAPTER_OTHER_WEBHOOK"
   },
   {
