@@ -398,7 +398,7 @@
     },
     "search_hosted": {
       "link": "https://members-ng.iracing.com/data/results/search_hosted",
-      "note": "Hosted and league sessions.  Maximum time frame of 90 days. Results split into one or more files with chunks of results. For scraping results the most effective approach is to keep track of the maximum end_time found during a search then make the subsequent call using that date/time as the finish_range_begin and skip any subsessions that are duplicated.  Results are ordered by subsessionid which is a proxy for start time. Requires one of: start_range_begin, finish_range_begin. Requires one of: cust_id, host_cust_id, session_name.",
+      "note": "Hosted and league sessions.  Maximum time frame of 90 days. Results split into one or more files with chunks of results. For scraping results the most effective approach is to keep track of the maximum end_time found during a search then make the subsequent call using that date/time as the finish_range_begin and skip any subsessions that are duplicated.  Results are ordered by subsessionid which is a proxy for start time. Requires one of: start_range_begin, finish_range_begin. Requires one of: cust_id, team_id, host_cust_id, session_name.",
       "parameters": {
         "start_range_begin": {
           "type": "string",
@@ -418,7 +418,11 @@
         },
         "cust_id": {
           "type": "number",
-          "note": "The participant's customer ID."
+          "note": "The participant's customer ID. Ignored if team_id is supplied."
+        },
+        "team_id": {
+          "type": "number",
+          "note": "The team ID to search for. Takes priority over cust_id if both are supplied."
         },
         "host_cust_id": {
           "type": "number",
@@ -481,7 +485,11 @@
         },
         "cust_id": {
           "type": "number",
-          "note": "Include only sessions in which this customer participated."
+          "note": "Include only sessions in which this customer participated. Ignored if team_id is supplied."
+        },
+        "team_id": {
+          "type": "number",
+          "note": "Include only sessions in which this team participated. Takes priority over cust_id if both are supplied."
         },
         "series_id": {
           "type": "number",
@@ -562,7 +570,7 @@
           "note": "Types of events to include in the search. Defaults to all. ?event_types=2,3,4,5"
         }
       },
-      "expirationSeconds": 900
+      "expirationSeconds": 60
     }
   },
   "series": {
