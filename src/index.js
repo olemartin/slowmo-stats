@@ -110,14 +110,18 @@ const graphMostActiveMembersLastWeek = async (instance, rosterData, team) => {
     const labels = [];
     await Promise.all(
         rosterData.map(async (member) => {
-            const stats = await fetchMembersLatest(instance, member);
-            const hosted = await fetchMembersHosted(instance, member);
-            if (stats?.map) {
-                const events = stats.map((r) => r.event_type_name);
-                graphs.push({
-                    name: member.display_name,
-                    count: { ..._.countBy(events, (e) => e), Hosted: hosted?.data?.length || 0 },
-                });
+            try {
+                const stats = await fetchMembersLatest(instance, member);
+                const hosted = await fetchMembersHosted(instance, member);
+                if (stats?.map) {
+                    const events = stats.map((r) => r.event_type_name);
+                    graphs.push({
+                        name: member.display_name,
+                        count: { ..._.countBy(events, (e) => e), Hosted: hosted?.data?.length || 0 },
+                    });
+                }
+            } catch (e) {
+                console.log('Error fetching member', member.cust_id);
             }
         })
     );
@@ -228,40 +232,42 @@ const graphSrData = async (rosterData, category, team) => {
     return chartData('stacked', labels, datasets, `${team.memberName}s ${category} safety`);
 };
 
-const run = async () => {
+const run = async (onlyTeams) => {
     if (process.env.ALWAYS_RUN !== 'true' && new Date().getDay() !== 1) {
         console.log('Not monday');
         return;
     }
     const instance = await auth();
-    for (const team of teams) {
-        const roster = await fetchTeamData(instance, team.teamId);
-        const graphUrls = [
-            await graphMostActiveMembersLastWeek(instance, roster, team),
-            await graphMostPopularSeriesLastWeek(instance, roster, team),
-            await graphSrData(roster, 'sports_car', team),
-            await graphIrData(roster, 'sports_car', team),
-            await graphHistoricDataForTeam(instance, roster, 5, 'sports_car', team),
-            await graphImprovementLastWeek(instance, roster, 'road', team),
-            await graphImprovementLastWeek(instance, roster, 'formula_car', team),
-            await graphImprovementLastWeek(instance, roster, 'sports_car', team),
-            await graphImprovementLastWeek(instance, roster, 'oval', team),
-            await graphImprovementLastWeek(instance, roster, 'dirt_oval', team),
-            await graphImprovementLastWeek(instance, roster, 'dirt_road', team),
-            //await graphSrData(instance, roster, "oval"),
-            //await graphIrData(instance, roster, "oval"),
-            //await graphHistoricDataForTeam(instance, roster, 1, "oval"),
-            //await graphImprovementLastWeek(instance, roster, "oval")
-        ];
+    if (!onlyTeams) {
+        for (const team of teams) {
+            const roster = await fetchTeamData(instance, team.teamId);
+            const graphUrls = [
+                await graphMostActiveMembersLastWeek(instance, roster, team),
+                await graphMostPopularSeriesLastWeek(instance, roster, team),
+                await graphSrData(roster, 'sports_car', team),
+                await graphIrData(roster, 'sports_car', team),
+                await graphHistoricDataForTeam(instance, roster, 5, 'sports_car', team),
+                await graphImprovementLastWeek(instance, roster, 'road', team),
+                await graphImprovementLastWeek(instance, roster, 'formula_car', team),
+                await graphImprovementLastWeek(instance, roster, 'sports_car', team),
+                await graphImprovementLastWeek(instance, roster, 'oval', team),
+                await graphImprovementLastWeek(instance, roster, 'dirt_oval', team),
+                await graphImprovementLastWeek(instance, roster, 'dirt_road', team),
+                //await graphSrData(instance, roster, "oval"),
+                //await graphIrData(instance, roster, "oval"),
+                //await graphHistoricDataForTeam(instance, roster, 1, "oval"),
+                //await graphImprovementLastWeek(instance, roster, "oval")
+            ];
 
-        console.log(JSON.stringify(graphUrls.filter((u) => !!u).map((u) => ({ image: { url: u } }))));
-        if (process.env[team.discordUrl]) {
-            await instance.post(process.env[team.discordUrl], {
-                username: `${team.teamName} stats`,
-                avatar_url: 'https://cdn-icons-png.flaticon.com/512/4778/4778417.png',
-                content: 'Ukens statistikk',
-                embeds: graphUrls.filter((u) => !!u).map((u) => ({ image: { url: u } })),
-            });
+            console.log(JSON.stringify(graphUrls.filter((u) => !!u).map((u) => ({ image: { url: u } }))));
+            if (process.env[team.discordUrl]) {
+                await instance.post(process.env[team.discordUrl], {
+                    username: `${team.teamName} stats`,
+                    avatar_url: 'https://cdn-icons-png.flaticon.com/512/4778/4778417.png',
+                    content: 'Ukens statistikk',
+                    embeds: graphUrls.filter((u) => !!u).map((u) => ({ image: { url: u } })),
+                });
+            }
         }
     }
     const graphs = [];
@@ -285,7 +291,9 @@ const run = async () => {
     }
 };
 
-Promise.all([run()])
+const args = process.argv;
+const onlyTeams = args.length === 3 && args[2] === 'teams';
+Promise.all([run(onlyTeams)])
     .catch((e) => {
         console.log(e);
     })

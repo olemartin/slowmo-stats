@@ -61,10 +61,6 @@ redis.connect().then(async () => {
                     custId: member.cust_id,
                     lapTimes,
                 });
-                // let raceSummary;
-                // if (raceDetails.race) {
-                //     raceSummary = await getRaceSummary({ lapTimes, raceDetails, team, member, race, races });
-                // }
                 await postToDiscord({
                     instance,
                     race,
@@ -73,7 +69,6 @@ redis.connect().then(async () => {
                     member,
                     team,
                     chartData,
-                    // raceSummary,
                 });
             }
             if (races.length > 0) {
