@@ -12,6 +12,12 @@
     "discordUrl": "CHAPTER_OTHER_WEBHOOK"
   },
   {
+    "teamName": "Team Nordic eSports",
+    "memberName": "Nordic",
+    "teamId": 339562,
+    "discordUrl": "CHAPTER_OTHER_WEBHOOK"
+  },
+  {
     "teamName": "Aerokinetix",
     "memberName": "Aero",
     "teamId": 269698,
