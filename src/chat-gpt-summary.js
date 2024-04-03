@@ -53,7 +53,7 @@ Fastest lap of the race: ${race.fastestLap.time} by ${race.fastestLap.name}
 export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race, races }) => {
     if (race && raceDetails && lapTimes?.length > 0 && team && member) {
         const previousRaces = races.reverse().map((race) => ({
-            position: race.finish_position_in_class + 1,
+            position: race.finish_position_in_class,
             incidents: race.incidents,
             raced_at: race.start_time,
         }));
@@ -83,11 +83,11 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
                 sratingDifference: formatLicenseForSummary(raceDetails.race),
                 name: member.display_name,
                 race: {
-                    position: race.finish_position_in_class + 1,
+                    position: race.finish_position_in_class,
                     sof: ratingFormatter.format(raceDetails.sof || race.event_strength_of_field),
                 },
                 qualify: {
-                    position: race?.starting_position_in_class + 1,
+                    position: race?.starting_position_in_class,
                 },
             },
         };

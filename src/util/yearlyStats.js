@@ -50,10 +50,6 @@ export const graphYearlyData = async (instance, rosterData) => {
                 .filter((d) => d.year === YEAR)
                 .filter((d) => d.category === 'Sports Car');
             const combined = combineStats(roadStats[0], sportsCarStats[0]);
-            // console.log(member.display_name);
-            // console.log(roadStats[0]);
-            // console.log(sportsCarStats[0]);
-            // console.log(combined);
             statistics.push({
                 ...combined,
                 cust_id: member.cust_id,
