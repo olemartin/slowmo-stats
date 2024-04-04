@@ -243,7 +243,7 @@ export async function getLaps(instance, subSessionId, custId, classParticipants)
             } else if (lapTimes[index - 1].lapNumber !== l.lapNumber) {
                 l.classPosition = 1;
             } else {
-                l.classPosition = lapTimes[index - 1].classPosition;
+                l.classPosition = lapTimes[index - 1].classPosition + 1;
             }
 
             if (!lapTimes[index + 1]) {
