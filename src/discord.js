@@ -87,7 +87,7 @@ const getQualifyingEmbeds = ({ race, member, raceDetails, qualLap, poleposition,
                 },
                 {
                     name: 'Plassering',
-                    value: positionEmoji || `${race.finish_position_in_class}.`,
+                    value: positionEmoji || `${race.finish_position_in_class + 1}.`,
                     inline: true,
                 },
                 {
@@ -184,14 +184,14 @@ const getRaceEmbeds = ({
                     ? [
                           {
                               name: 'Startposisjon',
-                              value: `${race.starting_position_in_class}.`,
+                              value: `${race.starting_position_in_class + 1}.`,
                               inline: true,
                           },
                       ]
                     : []),
                 {
                     name: 'Plassering',
-                    value: positionEmoji || `${race.finish_position_in_class}.`,
+                    value: positionEmoji || `${race.finish_position_in_class + 1}.`,
                     inline: true,
                 },
                 {
@@ -299,11 +299,11 @@ const getRaceEmbeds = ({
 
 function getEmbeds(race, member, splitInformation, raceDetails) {
     const positionEmoji =
-        race.finish_position_in_class === 1
+        race.finish_position_in_class === 0
             ? `🥇`
-            : race.finish_position_in_class === 2
+            : race.finish_position_in_class === 1
             ? `🥈`
-            : race.finish_position_in_class === 3
+            : race.finish_position_in_class === 2
             ? '🥉'
             : undefined;
     const poleposition = raceDetails.poleposition
