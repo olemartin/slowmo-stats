@@ -1,11 +1,9 @@
 import dotenv from 'dotenv';
 import { fetchMembersLatest, fetchTeamData, getLaps, getSplitInformation, getSubsession } from './integration.js';
-import { auth } from './auth.js';
 import { createClient } from 'redis';
-import teams from './teams.json' assert { type: 'json' };
+import teams from './teams.json' with { type: "json" };
 import { postToDiscord } from './discord.js';
 import { chartLaps } from './chart-laps.js';
-import { getRaceSummary } from './chat-gpt-summary.js';
 
 dotenv.config();
 
