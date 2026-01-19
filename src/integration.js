@@ -86,7 +86,7 @@ export const fetchTeamData = async (teamId) => {
 
 export async function getRaceCategories() {
     const seriesResponse = await api.get('/data/series/get');
-    const seriesData = (await s3instance().get(seriesResponse.data.link)).data;
+    const seriesData = (await s3instance.get(seriesResponse.data.link)).data;
     const categories = seriesData.map((s) => ({
         category: s.category,
         id: s.series_id,
