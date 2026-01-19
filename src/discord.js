@@ -1,6 +1,7 @@
 import { format, formatInTimeZone } from 'date-fns-tz';
 import nb from 'date-fns/locale/nb/index.js';
 import { chartCustomData } from './chart.js';
+import axios from 'axios';
 
 const safetyFormatter = new Intl.NumberFormat('nb-NB', {
     signDisplay: 'exceptZero',
@@ -67,16 +68,16 @@ export const formatLicense = (race) => {
 const getQualifyingEmbeds = ({ race, member, raceDetails, qualLap, poleposition, positionEmoji }) => {
     return [
         {
-            title: `${race.series_short_name} kjørt på ${race.track.track_name}`,
+            title: `${race.series_short_name} driven at ${race.track.track_name}`,
             url: `https://members.iracing.com/membersite/member/EventResult.do?subsessionid=${race.subsession_id}&custid=${member.cust_id}`,
             fields: [
                 {
-                    name: 'Fører',
+                    name: 'Driver',
                     value: `**${member.display_name}**`,
                     inline: true,
                 },
                 {
-                    name: 'Bil',
+                    name: 'Car',
                     value: race.car_name,
                     inline: true,
                 },
@@ -86,12 +87,12 @@ const getQualifyingEmbeds = ({ race, member, raceDetails, qualLap, poleposition,
                     inline: true,
                 },
                 {
-                    name: 'Plassering',
+                    name: 'Position',
                     value: positionEmoji || `${race.finish_position_in_class + 1}.`,
                     inline: true,
                 },
                 {
-                    name: 'Runder kjørt',
+                    name: 'Laps Completed',
                     value: ratingFormatter.format(raceDetails.qualifying?.laps_complete),
                     inline: true,
                 },
@@ -101,7 +102,7 @@ const getQualifyingEmbeds = ({ race, member, raceDetails, qualLap, poleposition,
                     inline: true,
                 },
                 {
-                    name: 'Kvalifisering',
+                    name: 'Qualifying',
                     value: `${qualLap ? format(qualLap, 'mm:ss.SSS') : 'Ingen tid'}`,
                     inline: true,
                 },
@@ -114,21 +115,19 @@ const getQualifyingEmbeds = ({ race, member, raceDetails, qualLap, poleposition,
                     inline: true,
                 },
                 {
-                    name: 'Tid',
+                    name: 'Time',
                     value: `${poleposition ? format(poleposition, 'mm:ss.SSS') : ''}`,
                     inline: true,
                 },
-                { name: 'Resultat', value: '' },
+                { name: 'Result', value: '' },
                 {
-                    name: 'Lisens',
+                    name: 'License',
                     value: formatLicense(raceDetails.qualifying),
                     inline: true,
                 },
             ],
             footer: {
-                text: `Kjørt ${formatInTimeZone(new Date(race.start_time), 'Europe/Oslo', 'eeee dd.MM.yyyy, HH:mm', {
-                    locale: nb,
-                })}`,
+                text: `At ${formatInTimeZone(new Date(race.start_time), 'Europe/Oslo', 'eeee dd.MM.yyyy, HH:mm')}`,
             },
         },
     ];
@@ -149,16 +148,16 @@ const getRaceEmbeds = ({
 }) => {
     return [
         {
-            title: `${race.event_type_name} in ${race.series_short_name} kjørt på ${race.track.track_name}`,
+            title: `${race.event_type_name} in ${race.series_short_name} driven at ${race.track.track_name}`,
             url: `https://members.iracing.com/membersite/member/EventResult.do?subsessionid=${race.subsession_id}&custid=${member.cust_id}`,
             fields: [
                 {
-                    name: 'Fører',
+                    name: 'Driver',
                     value: `**${member.display_name}**`,
                     inline: true,
                 },
                 {
-                    name: 'Bil',
+                    name: 'Car',
                     value: race.car_name,
                     inline: true,
                 },
@@ -174,7 +173,7 @@ const getRaceEmbeds = ({
                 ...(raceDetails.carNumber
                     ? [
                           {
-                              name: 'Startnummer',
+                              name: 'Car number',
                               value: raceDetails.carNumber,
                               inline: true,
                           },
@@ -183,24 +182,24 @@ const getRaceEmbeds = ({
                 ...(race?.starting_position_in_class >= 0
                     ? [
                           {
-                              name: 'Startposisjon',
+                              name: 'Grid position',
                               value: `${race.starting_position_in_class + 1}.`,
                               inline: true,
                           },
                       ]
                     : []),
                 {
-                    name: 'Plassering',
+                    name: 'Finish position',
                     value: positionEmoji || `${race.finish_position_in_class + 1}.`,
                     inline: true,
                 },
                 {
-                    name: 'Runder kjørt',
+                    name: 'Laps completed',
                     value: ratingFormatter.format(race?.laps_complete || raceDetails.qualifying?.laps_complete),
                     inline: true,
                 },
                 {
-                    name: 'Runder ledet',
+                    name: 'Laps led',
                     value: ratingFormatter.format(race.laps_led),
                     inline: true,
                 },
@@ -210,17 +209,17 @@ const getRaceEmbeds = ({
                     inline: true,
                 },
                 {
-                    name: 'Beste rundetid',
+                    name: 'Best lap',
                     value: `${bestLap ? format(bestLap, 'mm:ss.SSS') : ''}`,
                     inline: true,
                 },
                 {
-                    name: 'Gjennomsnittlig',
+                    name: 'Average',
                     value: `${averageLap ? format(averageLap, 'mm:ss.SSS') : ''}`,
                     inline: true,
                 },
                 {
-                    name: 'Kvalifisering',
+                    name: 'Qualifying',
                     value: `${qualLap ? format(qualLap, 'mm:ss.SSS') : 'Ingen tid'}`,
                     inline: true,
                 },
@@ -233,40 +232,40 @@ const getRaceEmbeds = ({
                     inline: true,
                 },
                 {
-                    name: 'Tid',
+                    name: 'Time',
                     value: `${poleposition ? format(poleposition, 'mm:ss.SSS') : ''}`,
                     inline: true,
                 },
                 { name: '', value: '' },
                 {
-                    name: 'Vinner',
+                    name: 'Winner',
                     value: `${raceDetails.winner?.display_name || ''} (${ratingFormatter.format(
                         raceDetails.winner?.newi_rating || ''
                     )})`,
                     inline: true,
                 },
                 {
-                    name: 'Gjennomsnittlig tid',
+                    name: 'Average',
                     value: `${bestAverage ? format(bestAverage, 'mm:ss.SSS') : ''}`,
                     inline: true,
                 },
 
                 { name: '', value: '' },
                 {
-                    name: 'Raskeste rundetid',
+                    name: 'Fastest lap',
                     value: `${raceDetails.fastestLap?.display_name || ''} (${ratingFormatter.format(
                         raceDetails.fastestLap?.newi_rating || ''
                     )})`,
                     inline: true,
                 },
                 {
-                    name: 'Tid',
+                    name: 'Time',
                     value: `${fastestLap ? format(fastestLap, 'mm:ss.SSS') : ''}`,
                     inline: true,
                 },
-                { name: 'Resultat', value: '' },
+                { name: 'Result', value: '' },
                 {
-                    name: 'Lisens',
+                    name: 'License',
                     value: `${
                         raceDetails.race
                             ? formatLicense(raceDetails.race)
@@ -289,9 +288,7 @@ const getRaceEmbeds = ({
                     : []),
             ],
             footer: {
-                text: `Kjørt ${formatInTimeZone(new Date(race.start_time), 'Europe/Oslo', 'eeee dd.MM.yyyy, HH:mm', {
-                    locale: nb,
-                })}`,
+                text: `At ${formatInTimeZone(new Date(race.start_time), 'Europe/Oslo', 'eeee dd.MM.yyyy, HH:mm')}`,
             },
         },
     ];
@@ -334,16 +331,8 @@ function getEmbeds(race, member, splitInformation, raceDetails) {
     }
 }
 
-export const postToDiscord = async ({
-    instance,
-    race,
-    raceDetails,
-    splitInformation,
-    member,
-    team,
-    chartData,
-    raceSummary,
-}) => {
+export const postToDiscord = async ({ race, raceDetails, splitInformation, member, team, chartData, raceSummary }) => {
+    const instance = axios.create();
     const embeds = getEmbeds(race, member, splitInformation, raceDetails);
     const charts =
         chartData.positionChart && chartData.laptimeChart

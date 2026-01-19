@@ -116,7 +116,7 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
                 ],
                 temperature: 0.1,
                 //max_tokens: 300,
-                model: 'gpt-3.5-turbo',
+                model: 'gpt-5.1',
             });
 
             const result = completion.choices[0].message.content;

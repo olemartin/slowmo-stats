@@ -241,18 +241,20 @@ const run = async (onlyTeams) => {
     if (!onlyTeams) {
         for (const team of teams) {
             const roster = await fetchTeamData(instance, team.teamId);
+            // const team = teams[0];
+            // const roster = [{ cust_id: 1051207, display_name: 'Anders Grinilia' }];
             const graphUrls = [
                 await graphMostActiveMembersLastWeek(instance, roster, team),
                 await graphMostPopularSeriesLastWeek(instance, roster, team),
                 await graphSrData(roster, 'sports_car', team),
                 await graphIrData(roster, 'sports_car', team),
-                await graphHistoricDataForTeam(instance, roster, 5, 'sports_car', team),
-                await graphImprovementLastWeek(instance, roster, 'road', team),
-                await graphImprovementLastWeek(instance, roster, 'formula_car', team),
-                await graphImprovementLastWeek(instance, roster, 'sports_car', team),
-                await graphImprovementLastWeek(instance, roster, 'oval', team),
-                await graphImprovementLastWeek(instance, roster, 'dirt_oval', team),
-                await graphImprovementLastWeek(instance, roster, 'dirt_road', team),
+                // await graphHistoricDataForTeam(instance, roster, 5, 'sports_car', team),
+                // await graphImprovementLastWeek(instance, roster, 'road', team),
+                // await graphImprovementLastWeek(instance, roster, 'formula_car', team),
+                // await graphImprovementLastWeek(instance, roster, 'sports_car', team),
+                // await graphImprovementLastWeek(instance, roster, 'oval', team),
+                // await graphImprovementLastWeek(instance, roster, 'dirt_oval', team),
+                // await graphImprovementLastWeek(instance, roster, 'dirt_road', team),
                 //await graphSrData(instance, roster, "oval"),
                 //await graphIrData(instance, roster, "oval"),
                 //await graphHistoricDataForTeam(instance, roster, 1, "oval"),

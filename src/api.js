@@ -1,14 +1,17 @@
-import rateLimit from 'axios-rate-limit';
 import axios from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
-import Base64 from 'crypto-js/enc-base64.js';
-import sha256 from 'crypto-js/sha256.js';
-import { CookieJar } from 'tough-cookie';
+import rateLimit from 'axios-rate-limit';
+import { addSeconds } from 'date-fns';
 import dotenv from 'dotenv';
+import sha256 from 'crypto-js/sha256.js';
+import Base64 from 'crypto-js/enc-base64.js';
 
 dotenv.config();
 
-const jar = new CookieJar();
+let instance = null;
+let tokenExpiresAt = null;
+let tokenAquiredAt = null;
+
 const email = process.env.IRACING_USERNAME;
 const password = process.env.IRACING_PASSWORD;
 const clientId = process.env.IRACING_CLIENT_ID;
@@ -19,7 +22,23 @@ const hashSecret = (id, secret) => {
     return Base64.stringify(hash);
 };
 
-export const auth = async () => {
+const getAuthenticatedInstance = async () => {
+    if (!instance || Date.now() >= tokenExpiresAt) {
+        const authData = await auth();
+        instance = authData.instance;
+        tokenAquiredAt = new Date();
+        tokenExpiresAt = addSeconds(tokenAquiredAt, authData.expiresIn);
+    }
+    return instance;
+};
+const api = {
+    get: async (url, params) => {
+        const instance = await getAuthenticatedInstance();
+        return instance.get(url, params);
+    },
+};
+
+const auth = async () => {
     const data = new URLSearchParams();
     data.append('grant_type', 'password_limited');
     data.append('client_id', clientId);
@@ -35,7 +54,7 @@ export const auth = async () => {
 
     const accessToken = response.data.access_token;
     const tokenType = response.data.token_type;
-    const refreshToken = response.data.refresh_token;
+    const expiresIn = response.data.expires_in;
 
     const instance = wrapper(
         rateLimit(
@@ -48,5 +67,7 @@ export const auth = async () => {
             { maxRPS: 5 }
         )
     );
-    return { instance, refreshToken };
+    return { instance, expiresIn };
 };
+
+export default api;

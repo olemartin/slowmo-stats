@@ -1,7 +1,8 @@
 import _ from 'underscore';
 import { auth } from '../auth.js';
-import teams from '../teams.json' assert { type: 'json' };
 import { fetchTeamData } from '../integration.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const combineStats = (road, sportsCar) => {
     if (!road && !sportsCar) {
@@ -120,8 +121,14 @@ export const graphYearlyData = async (instance, rosterData) => {
 const run = async () => {
     const instance = await auth();
     const roster = await fetchTeamData(instance, 311379);
-    await graphYearlyData(instance, roster);
+    try {
+        await graphYearlyData(instance, roster);
+    } catch (err) {
+        console.error(err);
+        process.exit(1);
+        return;
+    }
     process.exit(0);
 };
 
-run();
+Promise.all([run()]);
