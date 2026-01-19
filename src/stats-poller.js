@@ -12,7 +12,7 @@ const getLatestRace = async (cust_id) => {
 };
 
 const redis = createClient({
-    url: process.env.REDISCLOUD_URL,
+    url: process.env.REDIS_URL,
 });
 
 const storeLatestRace = async (cust_id, latestRace, subSessionIds) => {
