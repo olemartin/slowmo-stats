@@ -11,8 +11,13 @@ const getLatestRace = async (cust_id) => {
     return await redis.hGetAll(cust_id.toString());
 };
 
+const redisUrl = process.env.REDIS_URL
 const redis = createClient({
-    url: process.env.REDIS_URL,
+    url: redisUrl,
+    socket: {
+        tls: (redisUrl.match(/rediss:/) != null),
+        rejectUnauthorized: false,
+    }
 });
 
 const storeLatestRace = async (cust_id, latestRace, subSessionIds) => {
