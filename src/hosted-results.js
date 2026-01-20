@@ -1,32 +1,13 @@
-//https://members-ng.iracing.com/data/results/get?subsession_id=58777491
-//https://members-ng.iracing.com/data/results/get?subsession_id=58777490
-//https://members-ng.iracing.com/data/results/get?subsession_id=58758683
-//https://members-ng.iracing.com/data/results/get?subsession_id=58758682
+import api from './api.js';
 
-// https://members-ng.iracing.com/data/results/lap_data?simsession_number=0&subsession_id=58777490&cust_id=436196
-//
-//   "chunk_info": {
-//   "chunk_size": 500,
-//     "num_chunks": 1,
-//     "rows": 10,
-//     "base_download_url": "https://dqfp1ltauszrc.cloudfront.net/public/lapdata/subsession/58777490/0/436196/",
-//     "chunk_file_names": [
-//     "05305995ebba9f99167eb6fec3fd13689eb70e424731959aa6c7fa828a4f63b6.json"
-//   ]
-// },
-
-//https://dqfp1ltauszrc.cloudfront.net/public/lapdata/subsession/58777490/0/436196/05305995ebba9f99167eb6fec3fd13689eb70e424731959aa6c7fa828a4f63b6.json
-
-import auth from './auth.js';
-
-async function getSession(instance, subSessionId) {
-    const session = await instance.get('/data/results/get', {
+async function getSession(subSessionId) {
+    const session = await api.get('/data/results/get', {
         params: {
             subsession_id: subSessionId,
         },
     });
 
-    const data = await instance.get(session.data.link);
+    const data = await api.get(session.data.link);
     return data.data.session_results[0].results
         .map((d) => {
             return {
@@ -39,31 +20,24 @@ async function getSession(instance, subSessionId) {
 }
 
 const getSessions = async () => {
-    const instance = await auth();
-
     const sessions = (
-        await Promise.all([
-            getSession(instance, 58962039),
-            getSession(instance, 58962040),
-            getSession(instance, 58981077),
-            getSession(instance, 58981078),
-        ])
+        await Promise.all([getSession(58962039), getSession(58962040), getSession(58981077), getSession(58981078)])
     ).flat();
 
     const times = await Promise.all(
         sessions.map(async (user) => {
-            const response = await instance.get('/data/results/lap_data', {
+            const response = await api.get('/data/results/lap_data', {
                 params: {
                     simsession_number: 0,
                     subsession_id: user.subsession_id,
                     cust_id: user.cust_id,
                 },
             });
-            const data = await instance.get(response.data.link);
+            const data = await api.get(response.data.link);
 
             if (data.data.chunk_info?.base_download_url) {
                 const url = data.data.chunk_info.base_download_url + data.data.chunk_info.chunk_file_names;
-                const laps = (await instance.get(url)).data;
+                const laps = (await api.get(url)).data;
                 const validLapTimes = laps
                     .filter((l) => !l.incident && l.lap_time > 0 && l.lap_events.length === 0)
                     .map((l) => l.lap_time / 10)

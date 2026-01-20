@@ -1,7 +1,7 @@
 import _ from 'underscore';
-import { auth } from '../auth.js';
 import { fetchTeamData } from '../integration.js';
 import dotenv from 'dotenv';
+import api from '../api.js';
 dotenv.config();
 
 const combineStats = (road, sportsCar) => {
@@ -33,17 +33,17 @@ const combineStats = (road, sportsCar) => {
         laps_led_percentage: (100 * (road.laps_led + sportsCar.laps_led)) / (road.laps + sportsCar.laps),
     };
 };
-export const graphYearlyData = async (instance, rosterData) => {
+export const graphYearlyData = async (rosterData) => {
     let statistics = [];
     const YEAR = 2024;
     await Promise.all(
         rosterData.map(async (member) => {
-            const memberResponse = await instance.get('/data/stats/member_yearly', {
+            const memberResponse = await api.get('/data/stats/member_yearly', {
                 params: {
                     cust_id: member.cust_id,
                 },
             });
-            const memberStats = await instance.get(memberResponse.data.link);
+            const memberStats = await api.get(memberResponse.data.link);
             const roadStats = memberStats.data.stats
                 .filter((d) => d.year === YEAR)
                 .filter((d) => d.category === 'Road');
@@ -119,10 +119,9 @@ export const graphYearlyData = async (instance, rosterData) => {
     console.log(minLaps.display_name + ' kjørte ' + minLaps.laps + ' runder');
 };
 const run = async () => {
-    const instance = await auth();
-    const roster = await fetchTeamData(instance, 311379);
+    const roster = await fetchTeamData(311379);
     try {
-        await graphYearlyData(instance, roster);
+        await graphYearlyData(roster);
     } catch (err) {
         console.error(err);
         process.exit(1);

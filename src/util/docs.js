@@ -1,5 +1,4 @@
-import { auth } from '../auth.js';
+import api from '../api.js';
 
-const instance = await auth();
-const response = await instance.get('/data/doc');
+const response = await api.get('/data/doc');
 console.log(JSON.stringify(response.data));
