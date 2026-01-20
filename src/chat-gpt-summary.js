@@ -100,26 +100,19 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
         });
 
         try {
-            const completion = await openai.chat.completions.create({
-                messages: [
-                    {
-                        role: 'system',
-                        content: `I want you to create a report of a race in iRacing. 
+            const response = await openai.responses.create({
+                instructions: `I want you to create a report of a race in iRacing. 
                         It should be mostly funny, but also informative with some insights in how the race went. 
                         The report should be funny and witty. If the driver does something bad, be rude and call him names. 
  Keep it short, max 400 words and 5 paragraphs. Pitting is not a bad thing. If the irating gained is positive, you should also be positive. 
  Everything over 50 points gained is amazing!
  Focus on ${data.driver.name} and how his race progressed through the laps compared to how he has performed in earlier races. 
  Compare the driver's laptimes to each other, and to other drivers`,
-                    },
-                    { role: 'user', content: text },
-                ],
-                temperature: 0.1,
-                //max_tokens: 300,
+                input: text,
                 model: 'gpt-5.1',
             });
 
-            const result = completion.choices[0].message.content;
+            const result = response.output_text;
             console.log(result);
             return result;
         } catch (e) {

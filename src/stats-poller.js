@@ -4,6 +4,7 @@ import { createClient } from 'redis';
 import teams from './teams.json' with { type: "json" };
 import { postToDiscord } from './discord.js';
 import { chartLaps } from './chart-laps.js';
+import { getRaceSummary } from './chat-gpt-summary.js';
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ const redis = createClient({
     }
 });
 
-const storeLatestRace = async (cust_id, latestRace, subSessionIds) => {
+const storeLatestRace = async (cust_id, latestRace) => {
     await redis.hSet(cust_id.toString(), 'endTime', latestRace.end_time);
     await redis.hSet(cust_id.toString(), 'subsessionId', latestRace.subsession_id);
 };
@@ -60,6 +61,7 @@ redis.connect().then(async () => {
                         custId: member.cust_id,
                         lapTimes,
                     });
+                    const raceSummary = await getRaceSummary({lapTimes, raceDetails, team, member, race, races});
                     await postToDiscord({
                         race,
                         raceDetails,
@@ -67,6 +69,7 @@ redis.connect().then(async () => {
                         member,
                         team,
                         chartData,
+                        raceSummary
                     });
                 }
                 if (races.length > 0) {
