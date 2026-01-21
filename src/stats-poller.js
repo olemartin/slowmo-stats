@@ -40,6 +40,7 @@ redis.connect().then(async () => {
             for (const member of roster) {
                 const latestRace = await (process.env.SEND_ALL_RACES ? undefined : getLatestRace(member.cust_id));
                 const races = await fetchMembersLatest(member, [3, 5], latestRace, 1);
+                const previousRaces = await fetchMembersLatest(member, [3,5], undefined, 4 )
                 //const hosted = fetchMembersHosted(member, endTime);
                 for (const race of races) {
                     console.log({ subSessionId: race.subsession_id, custId: member.cust_id });
@@ -59,9 +60,11 @@ redis.connect().then(async () => {
                     const chartData = await chartLaps({
                         subSessionId: race.subsession_id,
                         custId: member.cust_id,
-                        lapTimes,
+                        lapTimes
                     });
-                    const raceSummary = await getRaceSummary({lapTimes, raceDetails, team, member, race, races});
+                    const raceSummary = await getRaceSummary({
+                        lapTimes, raceDetails, team, member, race, races: previousRaces
+                    });
                     await postToDiscord({
                         race,
                         raceDetails,

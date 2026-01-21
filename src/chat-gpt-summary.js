@@ -14,7 +14,7 @@ const openai = new OpenAI({
     apiKey: process.env.OPEN_AI_API_KEY,
 });
 
-export const generateGptText = ({ laps, driver, carType, race, previousRaces }) => {
+export const generateGptText = ({ laps, driver, carType, race, previousRaces, competitors }) => {
     const lapText = laps.map((lap) => {
         return ` - ${lap.lapNumber}. ${lap.classPosition}. position, ${lap.events.join(', ') || 'clean lap'} ${
             lap.personalBestLap ? ', his fastest lap of this race' : ''
@@ -25,9 +25,15 @@ export const generateGptText = ({ laps, driver, carType, race, previousRaces }) 
         (race) => ` - Raced at ${race.raced_at}: Incident points: ${race.incidents}, finish position: ${race.position}`
     );
 
+    const competitorsText = competitors.map(
+        (comp) =>
+            ` - ${comp.name} from ${comp.country}, incidents: ${comp.incidents}, best lap: ${comp.bestLap}, average lap: ${comp.averageLap}, finished position: ${comp.position}, irating: ${comp.irating}, laps completed: ${comp.laps}`
+    );
+
     const base = `
 Raced at: ${race.raceTime}
 Name of driver in focus: ${driver.name}
+Origin of driver in focus: ${driver.country}
 Name of race: ${race.name}
 Incident points: ${driver.incidents}
 Car: ${carType}
@@ -40,6 +46,8 @@ Finished position: ${driver.race.position}
 Safety rating difference: ${driver.sratingDifference}
 Laps: 
 ${lapText.join('\n')}
+Competitors:
+${competitorsText.join('\n')}
 Previous races:
 ${previousRacesText.join('\n')}
 Number of drivers: ${race.numDrivers}
@@ -52,13 +60,27 @@ Fastest lap of the race: ${race.fastestLap.time} by ${race.fastestLap.name}
 
 export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race, races }) => {
     if (race && raceDetails && lapTimes?.length > 0 && team && member) {
-        const previousRaces = races.reverse().map((race) => ({
-            position: race.finish_position_in_class + 1,
-            incidents: race.incidents,
-            raced_at: race.start_time,
-        }));
+        const previousRaces = races
+            .slice(1)
+            .reverse()
+            .map((race) => ({
+                position: race.finish_position_in_class + 1,
+                incidents: race.incidents,
+                raced_at: race.start_time,
+            }));
+
         const data = {
             previousRaces,
+            competitors: raceDetails.classParticipants.map((part) => ({
+                name: part.display_name,
+                country: part.flair_name,
+                incidents: part.incidents,
+                averageLap: format(new Date(part.average_lap / 10), 'mm:ss.SSS'),
+                bestLap: format(new Date(part.best_lap_time / 10), 'mm:ss.SSS'),
+                position: part.position,
+                irating: part.oldi_rating,
+                laps: part.laps_complete,
+            })),
             race: {
                 raceTime: race.start_time,
                 name: race.series_short_name,
@@ -96,6 +118,7 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
             driver: data.driver,
             carType: data.carType,
             race: data.race,
+            competitors: data.competitors,
             previousRaces: data.previousRaces,
         });
 
