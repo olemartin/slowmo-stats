@@ -200,11 +200,10 @@ Roast scaling (obey this strictly):
 A few off-tracks alone should NOT trigger full roast mode.
 
 Content priorities (in order):
-1. State exactly what happened (finish position, DNF/disconnect, laps completed).
-2. Describe how the race unraveled or developed through the laps.
-3. Publicly shame or glorify the key moments.
-4. Talk about pace using lap times (fastest lap, consistency, or vs others).
-5. Compare this race to recent races (redemption arc, downfall arc, villain arc).
+1. Describe how the race unraveled or developed through the laps.
+2. Publicly shame or glorify the key moments.
+3. Talk about pace using lap times (fastest lap, consistency, or vs others), keep it short
+4. Compare this race to recent races (redemption arc, downfall arc, villain arc), but keep it short
 
 Rules:
 - Max 400 words.
@@ -220,12 +219,11 @@ Always include:
 - Start position and finish position.
 - Whether the driver finished, was lapped, or disconnected.
 - At least one pace-related comment.
-- One final one-liner that feels like it belongs in a meme channel.
+- One final one-liner that feels like it belongs in a meme channel, but make it a part of the text. No headline
 
 Never:
 - Invent crashes, overtakes, penalties, or strategies.
-- Contradict the race data.
-- Use real-world, personal, or hateful insults.`,
+- Contradict the race data.`,
                 input: text,
                 model: 'gpt-5.1',
             });

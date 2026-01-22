@@ -47,40 +47,45 @@ redis.connect().then(async () => {
             for (const member of roster) {
                 const latestRace = await (process.env.SEND_ALL_RACES ? undefined : getLatestRace(member.cust_id));
                 const races = await fetchMembersLatest(member, [3, 5], latestRace, 1);
-                const previousRaces = await fetchMembersLatest(member, [3,5], undefined, 4 )
+                const previousRaces = await fetchMembersLatest(member, [3, 5], undefined, 4);
                 //const hosted = await fetchMembersHosted(member, 1);
                 for (const race of races) {
-                    console.log({ subSessionId: race.subsession_id, custId: member.cust_id });
-                    const splitInformation = await getSplitInformation(
-                        race.session_id,
-                        race.subsession_id,
-                        race.start_time,
-                        race.series_id,
-                        5
-                    );
-                    const raceDetails = await getSubsession(race.subsession_id, member.cust_id);
-                    const lapTimes = await getLaps(
-                        race.subsession_id,
-                        member.cust_id,
-                        raceDetails.classParticipants || raceDetails.allParticipants || []
-                    );
-                    const chartData = await chartLaps({
-                        subSessionId: race.subsession_id,
-                        custId: member.cust_id,
-                        lapTimes
-                    });
-                    const raceSummary = await getRaceSummary({
-                        lapTimes, raceDetails, team, member, race, races: previousRaces
-                    });
-                    await postToDiscord({
-                        race,
-                        raceDetails,
-                        splitInformation,
-                        member,
-                        team,
-                        chartData,
-                        raceSummary
-                    });
+                    try {
+                        console.log({ subSessionId: race.subsession_id, custId: member.cust_id });
+                        const splitInformation = await getSplitInformation(
+                            race.session_id,
+                            race.subsession_id,
+                            race.start_time,
+                            race.series_id,
+                            5
+                        );
+                        const raceDetails = await getSubsession(race.subsession_id, member.cust_id);
+                        const lapTimes = await getLaps(
+                            race.subsession_id,
+                            member.cust_id,
+                            raceDetails.classParticipants || raceDetails.allParticipants || []
+                        );
+                        const chartData = await chartLaps({
+                            subSessionId: race.subsession_id,
+                            custId: member.cust_id,
+                            lapTimes
+                        });
+                        const raceSummary = await getRaceSummary({
+                            lapTimes, raceDetails, team, member, race, races: previousRaces
+                        });
+                        await postToDiscord({
+                            race,
+                            raceDetails,
+                            splitInformation,
+                            member,
+                            team,
+                            chartData,
+                            raceSummary
+                        });
+
+                    } catch (error) {
+                        console.error('Error processing race', member.display_name, race.subsession_id, error);
+                    }
                 }
                 if (races.length > 0) {
                     const latestRace = races.sort(
