@@ -190,6 +190,15 @@ export async function getSubsession(subSessionId, custId) {
         ? classParticipants.reduce((a, b) => a + b.oldi_rating, 0) / classParticipants.length
         : undefined;
 
+    // console.log({ classParticipants });
+    // console.log({
+    //     participants: classParticipants.map((c) => ({
+    //         classInterval: c.class_interval,
+    //         finished: c.finish_position_in_class + 1,
+    //         reason: c.reason_out,
+    //     })),
+    // });
+
     return {
         race,
         qualifying,

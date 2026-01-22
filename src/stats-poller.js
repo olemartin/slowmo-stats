@@ -1,5 +1,12 @@
 import dotenv from 'dotenv';
-import { fetchMembersLatest, fetchTeamData, getLaps, getSplitInformation, getSubsession } from './integration.js';
+import {
+    fetchMembersHosted,
+    fetchMembersLatest,
+    fetchTeamData,
+    getLaps,
+    getSplitInformation,
+    getSubsession
+} from './integration.js';
 import { createClient } from 'redis';
 import teams from './teams.json' with { type: "json" };
 import { postToDiscord } from './discord.js';
@@ -41,7 +48,7 @@ redis.connect().then(async () => {
                 const latestRace = await (process.env.SEND_ALL_RACES ? undefined : getLatestRace(member.cust_id));
                 const races = await fetchMembersLatest(member, [3, 5], latestRace, 1);
                 const previousRaces = await fetchMembersLatest(member, [3,5], undefined, 4 )
-                //const hosted = fetchMembersHosted(member, endTime);
+                //const hosted = await fetchMembersHosted(member, 1);
                 for (const race of races) {
                     console.log({ subSessionId: race.subsession_id, custId: member.cust_id });
                     const splitInformation = await getSplitInformation(
