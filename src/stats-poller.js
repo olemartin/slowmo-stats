@@ -71,7 +71,7 @@ redis.connect().then(async () => {
                             lapTimes
                         });
                         const raceSummary = await getRaceSummary({
-                            lapTimes, raceDetails, team, member, race, races: previousRaces
+                            lapTimes, raceDetails, team, member, race, races: previousRaces, splitInformation
                         });
                         await postToDiscord({
                             race,

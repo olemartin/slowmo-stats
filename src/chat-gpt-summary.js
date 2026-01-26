@@ -71,6 +71,7 @@ Incident points: ${driver.incidents}
 Safety rating difference: ${driver.sratingDifference}
 
 Name of race: ${race.name}
+Split: ${race.split} of ${race.totalSplits}
 Car: ${carType}
 Track: ${race.track},
 Strength of field: ${race.sof}
@@ -89,7 +90,7 @@ Fastest lap of the race: ${race.fastestLap.time} by ${race.fastestLap.name}
     return base;
 };
 
-export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race, races }) => {
+export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race, races, splitInformation }) => {
     if (race && raceDetails && lapTimes?.length > 0 && team && member) {
         const previousRaces = races
             .slice(1)
@@ -128,6 +129,8 @@ export const getRaceSummary = async ({ lapTimes, raceDetails, team, member, race
                 name: race.series_short_name,
                 track: race.track.track_name,
                 totalLaps: winnerInRace.laps_complete,
+                split: splitInformation.splitId,
+                totalSplits: splitInformation.splits,
                 winner: {
                     name: raceDetails.winner?.display_name || '',
                 },
