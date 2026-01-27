@@ -248,15 +248,18 @@ const run = async (onlyTeams) => {
                 await graphIrData(roster, 'sports_car', team),
                 await graphHistoricDataForTeam(roster, 5, 'sports_car', team),
                 await graphImprovementLastWeek(roster, 'sports_car', team),
+                await graphImprovementLastWeek(roster, 'oval', team),
+                await graphImprovementLastWeek(roster, 'formula_car', team),
+                await graphImprovementLastWeek(roster, 'dirt_road', team),
+                await graphImprovementLastWeek(roster, 'dirt_oval', team),
+                //await graphSrData(roster, "oval", team),
+                //await graphIrData(roster, "oval", team),
+                // await graphHistoricDataForTeam(roster, 1, "oval", team),
+                // await graphHistoricDataForTeam(roster, 6, "formula_car", team),
+                // await graphHistoricDataForTeam(roster, 4, "dirt_road", team),
+                // await graphHistoricDataForTeam(roster, 3, "dirt_oval", team),
                 // await graphImprovementLastWeek(roster, 'formula_car', team),
-                // await graphImprovementLastWeek(roster, 'sports_car', team),
-                // await graphImprovementLastWeek(roster, 'oval', team),
-                // await graphImprovementLastWeek(roster, 'dirt_oval', team),
-                // await graphImprovementLastWeek(roster, 'dirt_road', team),
-                //await graphSrData(roster, "oval"),
-                //await graphIrData(roster, "oval"),
-                //await graphHistoricDataForTeam(roster, 1, "oval"),
-                //await graphImprovementLastWeek(roster, "oval")
+                // await graphImprovementLastWeek(roster, "oval")
             ];
 
             console.log(JSON.stringify(graphUrls.filter((u) => !!u).map((u) => ({ image: { url: u } }))));
