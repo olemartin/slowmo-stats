@@ -19,6 +19,7 @@ const getLatestRace = async (cust_id) => {
     return await redis.hGetAll(cust_id.toString());
 };
 
+const skipChatGPT = process.env.SKIP_CHAT_GPT === 'true';
 const redisUrl = process.env.REDIS_URL
 const redis = createClient({
     url: redisUrl,
@@ -70,7 +71,7 @@ redis.connect().then(async () => {
                             custId: member.cust_id,
                             lapTimes
                         });
-                        const raceSummary = await getRaceSummary({
+                        const raceSummary = skipChatGPT ? null : await getRaceSummary({
                             lapTimes, raceDetails, team, member, race, races: previousRaces, splitInformation
                         });
                         await postToDiscord({

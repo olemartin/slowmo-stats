@@ -96,11 +96,10 @@ export const chartLaps = async ({ lapTimes }) => {
             },
             title: {
                 display: true,
-                text: 'Plassering',
+                text: 'Position',
             },
         },
     };
 
-    //console.log(JSON.stringify({ laptimeChart, positionChart }));
     return { laptimeChart, positionChart };
 };
