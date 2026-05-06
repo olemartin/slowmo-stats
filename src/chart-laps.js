@@ -32,35 +32,37 @@ export const chartLaps = async ({ lapTimes }) => {
                     type: 'line',
                     fill: false,
                     borderColor: '#404090',
-                    backgroundColor: 'rgba(0,0,0,0)',
+                    backgroundColor: 'transparent',
                     pointBorderColor: lapTimes.map((l) => (l.incs ? '#F00' : '#000')),
                     pointBackgroundColor: lapTimes.map((l) => (l.incs ? '#F00' : '#000')),
-                    data: lapTimes.map((l) => mapLapTime({ lapTime: l })),
+                    data: lapTimes.map((l) => l?.time),
                 },
             ],
         },
         options: {
-            legend: { display: false },
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'Lap times',
+                },
+            },
             scales: {
-                yAxes: [
-                    {
-                        position: 'left',
-                        type: 'time',
-                        time: {
-                            parser: 'm:s.SSS',
-                            unit: 'second',
-                            min: mapLapTime({ lapTime: minTime, add: -20000 }),
-                            max: mapLapTime({ lapTime: maxTime, add: 20000 }),
-                            displayFormats: {
-                                second: 'mm:ss',
-                            },
+                y: {
+                    position: 'left',
+                    type: 'linear',
+                    //min: minTime.time - 25000,
+                    //max: maxTime.time + 25000,
+                    ticks: {
+                        stepSize: 20,
+                        callback: function (v) {
+                            if (v <= 0) {
+                                return '';
+                            }
+                            return new Date(v / 10).toISOString().substr(14, 9);
                         },
                     },
-                ],
-            },
-            title: {
-                display: true,
-                text: 'Rundetider',
+                },
             },
         },
     };
